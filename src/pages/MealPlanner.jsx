@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUser } from '../contexts/UserContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
@@ -6,18 +6,37 @@ import { ChefHat, ShoppingCart, Clock, Users, DollarSign } from 'lucide-react';
 
 const MealPlanner = () => {
   const { user } = useAuth();
-  const { userProfile, canGenerateMealPlan, incrementMealPlanUsage, isPremium } = useUser();
+  const { userProfile, canGenerateMealPlan, incrementMealPlanUsage, isPremium, updateUserProfile, mealPlansUsed } = useUser();
   const { config, region } = useSettings();
   const [loading, setLoading] = useState(false);
   const [mealPlan, setMealPlan] = useState(null);
   const [preferences, setPreferences] = useState({
-    dietaryRestrictions: userProfile?.dietary_restrictions || [],
-    allergies: userProfile?.allergies || [],
-    budget: userProfile?.budget_level || 'medium',
-    servings: userProfile?.household_size || 2,
-    cuisinePreferences: userProfile?.cuisine_preferences || [],
+    dietaryRestrictions: [],
+    allergies: [],
+    budget: 'medium',
+    servings: 2,
+    cuisinePreferences: [],
     dislikes: []
   });
+
+  // Sync preferences with user profile when it loads
+  useEffect(() => {
+    if (userProfile) {
+      setPreferences({
+        dietaryRestrictions: userProfile.dietary_restrictions || [],
+        allergies: userProfile.allergies || [],
+        budget: userProfile.budget_level || 'medium',
+        servings: userProfile.household_size || 2,
+        cuisinePreferences: userProfile.cuisine_preferences || [],
+        dislikes: userProfile.dislikes || []
+      });
+      console.log('📋 Preferences synced with user profile:', {
+        dietary: userProfile.dietary_restrictions?.length || 0,
+        allergies: userProfile.allergies?.length || 0,
+        cuisines: userProfile.cuisine_preferences?.length || 0
+      });
+    }
+  }, [userProfile]);
 
   const dietaryOptions = [
     'vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'keto', 'paleo', 'low-carb'
@@ -27,12 +46,45 @@ const MealPlanner = () => {
   const cuisineOptions = config.cuisines;
 
   const handlePreferenceChange = (category, value) => {
-    setPreferences(prev => ({
-      ...prev,
-      [category]: prev[category].includes(value)
-        ? prev[category].filter(item => item !== value)
-        : [...prev[category], value]
-    }));
+    setPreferences(prev => {
+      const newPreferences = {
+        ...prev,
+        [category]: prev[category].includes(value)
+          ? prev[category].filter(item => item !== value)
+          : [...prev[category], value]
+      };
+      
+      // Save to database when preferences change
+      savePreferencesToDatabase(newPreferences);
+      
+      return newPreferences;
+    });
+  };
+
+  const savePreferencesToDatabase = async (newPreferences) => {
+    if (!user || !userProfile) return;
+
+    try {
+      console.log('💾 Saving preferences to database...');
+      const updates = {
+        dietary_restrictions: newPreferences.dietaryRestrictions,
+        allergies: newPreferences.allergies,
+        budget_level: newPreferences.budget,
+        household_size: newPreferences.servings,
+        cuisine_preferences: newPreferences.cuisinePreferences,
+        dislikes: newPreferences.dislikes
+      };
+
+      const { error } = await updateUserProfile(updates);
+      
+      if (error) {
+        console.error('❌ Error saving preferences:', error);
+      } else {
+        console.log('✅ Preferences saved to database');
+      }
+    } catch (error) {
+      console.error('❌ Exception saving preferences:', error);
+    }
   };
 
   const generateRegionalMealPlan = () => {
@@ -460,7 +512,17 @@ const MealPlanner = () => {
       
       // Update UI and usage count
       setMealPlan(generatedPlan);
-      await incrementMealPlanUsage();
+      
+      // Increment usage count and handle the result
+      console.log('📈 Updating usage count...');
+      const usageResult = await incrementMealPlanUsage();
+      
+      if (usageResult.success) {
+        console.log('✅ Usage count updated successfully to:', usageResult.newCount);
+      } else {
+        console.error('❌ Failed to update usage count:', usageResult.error);
+        // Continue anyway - don't fail the whole process
+      }
       
       console.log('🎉 Meal plan generation completed successfully');
       
@@ -572,9 +634,16 @@ const MealPlanner = () => {
           {!isPremium && (
             <div className="text-right">
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Plans used this week: {userProfile?.meal_plans_used_this_week || 0}/3
+                Plans used this week: <span className="font-semibold text-primary">{mealPlansUsed}</span>/{isPremium ? '∞' : '3'}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Free tier</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {isPremium ? 'Premium tier' : 'Free tier'}
+              </p>
+              {!canGenerateMealPlan() && (
+                <p className="text-xs text-red-500 mt-1">
+                  Weekly limit reached
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -659,6 +728,17 @@ const MealPlanner = () => {
               ))}
             </div>
           </div>
+
+          {/* Debug Info - Remove in production */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-sm">
+              <h4 className="font-medium mb-2">Debug Info:</h4>
+              <p><strong>Dietary:</strong> {preferences.dietaryRestrictions.join(', ') || 'None'}</p>
+              <p><strong>Cuisines:</strong> {preferences.cuisinePreferences.join(', ') || 'None'}</p>
+              <p><strong>Usage:</strong> {mealPlansUsed}/3</p>
+              <p><strong>Can Generate:</strong> {canGenerateMealPlan() ? 'Yes' : 'No'}</p>
+            </div>
+          )}
 
           {/* Generate Button */}
           <div className="pt-4">
