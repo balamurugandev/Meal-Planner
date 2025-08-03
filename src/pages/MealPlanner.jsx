@@ -8,6 +8,15 @@ const MealPlanner = () => {
   const { user } = useAuth();
   const { userProfile, canGenerateMealPlan, incrementMealPlanUsage, isPremium, updateUserProfile, mealPlansUsed } = useUser();
   const { config, region } = useSettings();
+
+  // Show loading if contexts aren't ready
+  if (!config || !region) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
   const [loading, setLoading] = useState(false);
   const [mealPlan, setMealPlan] = useState(null);
   const [preferences, setPreferences] = useState({
@@ -43,7 +52,7 @@ const MealPlanner = () => {
   ];
 
   // Use region-specific cuisines
-  const cuisineOptions = config.cuisines;
+  const cuisineOptions = config?.cuisines || [];
 
   const handlePreferenceChange = (category, value) => {
     setPreferences(prev => {
@@ -156,72 +165,140 @@ const MealPlanner = () => {
     
     // Generate meal plans based on region and cuisine
     if (isIndian) {
+      // Create meal plan pools for different cuisines
+      const southIndianMeals = {
+        breakfasts: [
+          { name: isGlutenFree ? "Rice Idli with Sambar" : "Idli with Sambar", prepTime: "20 minutes" },
+          { name: "Upma with Coconut Chutney", prepTime: "15 minutes" },
+          { name: "Rava Dosa with Chutney", prepTime: "18 minutes" },
+          { name: "Medu Vada with Sambar", prepTime: "25 minutes" },
+          { name: "Pongal with Coconut Chutney", prepTime: "20 minutes" }
+        ],
+        lunches: [
+          { name: getProtein("Sambar Rice with Rasam", "Fish Curry with " + getGrain("Rice")), prepTime: "35 minutes" },
+          { name: getProtein("Curd Rice with Pickle", "Chicken Chettinad with " + getGrain("Rice")), prepTime: "30 minutes" },
+          { name: getProtein("Vegetable Biryani", "Mutton Biryani"), prepTime: "45 minutes" },
+          { name: getProtein("Lemon Rice with Papad", "Prawn Curry with Rice"), prepTime: "25 minutes" }
+        ],
+        dinners: [
+          { name: "Dosa with Potato Curry", prepTime: "25 minutes" },
+          { name: "Uttapam with Sambar", prepTime: "20 minutes" },
+          { name: "Appam with Vegetable Stew", prepTime: "30 minutes" },
+          { name: "Rava Upma with Chutney", prepTime: "18 minutes" }
+        ]
+      };
+
+      const northIndianMeals = {
+        breakfasts: [
+          { name: getDairy("Aloo Paratha with Yogurt"), prepTime: "25 minutes" },
+          { name: "Poha with Tea", prepTime: "12 minutes" },
+          { name: "Stuffed Paratha with Pickle", prepTime: "30 minutes" },
+          { name: "Chole Bhature", prepTime: "35 minutes" },
+          { name: "Puri with Aloo Sabzi", prepTime: "20 minutes" }
+        ],
+        lunches: [
+          { name: getProtein("Dal Makhani with " + getGrain("Rice"), "Butter Chicken with Naan"), prepTime: "40 minutes" },
+          { name: getProtein("Rajma with " + getGrain("Rice"), "Chicken Curry with " + getGrain("Rice")), prepTime: "45 minutes" },
+          { name: getProtein("Chole with Bhature", "Lamb Curry with " + getGrain("Rice")), prepTime: "50 minutes" },
+          { name: getProtein("Dal Tadka with Roti", "Mutton Curry with Rice"), prepTime: "35 minutes" }
+        ],
+        dinners: [
+          { name: "Roti with Palak Paneer", prepTime: "30 minutes" },
+          { name: "Chapati with Mixed Dal", prepTime: "25 minutes" },
+          { name: "Khichdi with " + getDairy("Ghee"), prepTime: "20 minutes" },
+          { name: "Paratha with Sabzi", prepTime: "25 minutes" }
+        ]
+      };
+
+      // Determine which cuisines to use and create mixed plan
+      const selectedCuisineTypes = [];
+      const availableMeals = { breakfasts: [], lunches: [], dinners: [] };
+
       if (isSouthIndian) {
-        cuisineType = 'South Indian';
-        weekPlan = {
-          monday: {
-            breakfast: { name: isGlutenFree ? "Rice Idli with Sambar" : "Idli with Sambar", prepTime: "20 minutes" },
-            lunch: { name: getProtein("Sambar Rice with Rasam", "Fish Curry with " + getGrain("Rice")), prepTime: "35 minutes" },
-            dinner: { name: "Dosa with Potato Curry", prepTime: "25 minutes" }
-          },
-          tuesday: {
-            breakfast: { name: "Upma with Coconut Chutney", prepTime: "15 minutes" },
-            lunch: { name: getProtein("Curd Rice with Pickle", "Chicken Chettinad with " + getGrain("Rice")), prepTime: "30 minutes" },
-            dinner: { name: "Uttapam with Sambar", prepTime: "20 minutes" }
-          },
-          wednesday: {
-            breakfast: { name: "Rava Dosa with Chutney", prepTime: "18 minutes" },
-            lunch: { name: getProtein("Vegetable Biryani", "Mutton Biryani"), prepTime: "45 minutes" },
-            dinner: { name: "Appam with Vegetable Stew", prepTime: "30 minutes" }
-          }
+        selectedCuisineTypes.push('South Indian');
+        availableMeals.breakfasts.push(...southIndianMeals.breakfasts);
+        availableMeals.lunches.push(...southIndianMeals.lunches);
+        availableMeals.dinners.push(...southIndianMeals.dinners);
+      }
+
+      if (isNorthIndian) {
+        selectedCuisineTypes.push('North Indian');
+        availableMeals.breakfasts.push(...northIndianMeals.breakfasts);
+        availableMeals.lunches.push(...northIndianMeals.lunches);
+        availableMeals.dinners.push(...northIndianMeals.dinners);
+      }
+
+      // If multiple cuisines selected, create mixed cuisine type
+      if (selectedCuisineTypes.length > 1) {
+        cuisineType = selectedCuisineTypes.join(' + ');
+      } else if (selectedCuisineTypes.length === 1) {
+        cuisineType = selectedCuisineTypes[0];
+      } else {
+        // Default to mixed Indian if no specific cuisine selected
+        cuisineType = 'Mixed Indian';
+        availableMeals.breakfasts.push(...southIndianMeals.breakfasts, ...northIndianMeals.breakfasts);
+        availableMeals.lunches.push(...southIndianMeals.lunches, ...northIndianMeals.lunches);
+        availableMeals.dinners.push(...southIndianMeals.dinners, ...northIndianMeals.dinners);
+      }
+
+      // Generate random meal plan from available options
+      const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+      weekPlan = {};
+
+      days.slice(0, 7).forEach((day, index) => {
+        // Ensure variety by not repeating meals too often
+        const breakfastIndex = index % availableMeals.breakfasts.length;
+        const lunchIndex = index % availableMeals.lunches.length;
+        const dinnerIndex = index % availableMeals.dinners.length;
+
+        weekPlan[day] = {
+          breakfast: availableMeals.breakfasts[breakfastIndex] || { name: "Mixed Indian Breakfast", prepTime: "20 minutes" },
+          lunch: availableMeals.lunches[lunchIndex] || { name: "Mixed Indian Lunch", prepTime: "35 minutes" },
+          dinner: availableMeals.dinners[dinnerIndex] || { name: "Mixed Indian Dinner", prepTime: "25 minutes" }
         };
-      } else if (isNorthIndian) {
-        cuisineType = 'North Indian';
-        weekPlan = {
-          monday: {
-            breakfast: { name: getDairy("Aloo Paratha with Yogurt"), prepTime: "25 minutes" },
-            lunch: { name: getProtein("Dal Makhani with " + getGrain("Rice"), "Butter Chicken with Naan"), prepTime: "40 minutes" },
-            dinner: { name: "Roti with Palak Paneer", prepTime: "30 minutes" }
-          },
-          tuesday: {
-            breakfast: { name: "Poha with Tea", prepTime: "12 minutes" },
-            lunch: { name: getProtein("Rajma with " + getGrain("Rice"), "Chicken Curry with " + getGrain("Rice")), prepTime: "45 minutes" },
-            dinner: { name: "Chapati with Mixed Dal", prepTime: "25 minutes" }
-          },
-          wednesday: {
-            breakfast: { name: "Stuffed Paratha with Pickle", prepTime: "30 minutes" },
-            lunch: { name: getProtein("Chole Bhature", "Lamb Curry with " + getGrain("Rice")), prepTime: "50 minutes" },
-            dinner: { name: "Khichdi with " + getDairy("Ghee"), prepTime: "20 minutes" }
-          }
-        };
-      } else if (isPunjabi) {
-        cuisineType = 'Punjabi';
-        weekPlan = {
-          monday: {
-            breakfast: { name: "Makki Roti with Sarson Saag", prepTime: "30 minutes" },
-            lunch: { name: getProtein("Dal Makhani with " + getGrain("Rice"), "Butter Chicken with Naan"), prepTime: "45 minutes" },
-            dinner: { name: "Roti with Rajma", prepTime: "35 minutes" }
-          },
-          tuesday: {
-            breakfast: { name: "Chole Kulche", prepTime: "25 minutes" },
-            lunch: { name: getProtein("Palak Paneer with " + getGrain("Rice"), "Chicken Tikka Masala"), prepTime: "40 minutes" },
-            dinner: { name: "Sarson Saag with Makki Roti", prepTime: "40 minutes" }
-          },
-          wednesday: {
-            breakfast: { name: "Puri with Aloo Sabzi", prepTime: "20 minutes" },
-            lunch: { name: getProtein("Kadhi Pakora", "Lamb Curry"), prepTime: "50 minutes" },
-            dinner: { name: getDairy("Kheer with Puri"), prepTime: "30 minutes" }
-          }
-        };
-      } else if (isGujarati) {
-        cuisineType = 'Gujarati';
-        weekPlan = {
-          monday: {
-            breakfast: { name: "Dhokla with Green Chutney", prepTime: "20 minutes" },
-            lunch: { name: "Gujarati Thali (Dal, Sabzi, Roti)", prepTime: "35 minutes" },
-            dinner: { name: "Khichdi with Kadhi", prepTime: "30 minutes" }
-          },
-          tuesday: {
+      });
+
+      // Handle other Indian cuisines if no South/North Indian selected
+      if (!isSouthIndian && !isNorthIndian) {
+        if (isGujarati) {
+          cuisineType = 'Gujarati';
+          weekPlan = {
+            monday: {
+              breakfast: { name: "Dhokla with Green Chutney", prepTime: "20 minutes" },
+              lunch: { name: "Gujarati Thali (Dal, Sabzi, Roti)", prepTime: "35 minutes" },
+              dinner: { name: "Khichdi with Kadhi", prepTime: "30 minutes" }
+            },
+            tuesday: {
+              breakfast: { name: isKeto ? "Dhokla with Chutney" : "Fafda with Jalebi", prepTime: "15 minutes" },
+              lunch: { name: "Undhiyu with Puri", prepTime: "45 minutes" },
+              dinner: { name: "Rotli with Shaak", prepTime: "25 minutes" }
+            },
+            wednesday: {
+              breakfast: { name: "Handvo with Chutney", prepTime: "25 minutes" },
+              lunch: { name: "Dal Dhokli", prepTime: "40 minutes" },
+              dinner: { name: isKeto ? "Vegetable Curry" : "Kheer with Puri", prepTime: "30 minutes" }
+            }
+          };
+        } else if (isPunjabi) {
+          cuisineType = 'Punjabi';
+          weekPlan = {
+            monday: {
+              breakfast: { name: "Makki Roti with Sarson Saag", prepTime: "30 minutes" },
+              lunch: { name: getProtein("Dal Makhani with " + getGrain("Rice"), "Butter Chicken with Naan"), prepTime: "45 minutes" },
+              dinner: { name: "Roti with Rajma", prepTime: "35 minutes" }
+            },
+            tuesday: {
+              breakfast: { name: "Chole Kulche", prepTime: "25 minutes" },
+              lunch: { name: getProtein("Palak Paneer with " + getGrain("Rice"), "Chicken Tikka Masala"), prepTime: "40 minutes" },
+              dinner: { name: "Sarson Saag with Makki Roti", prepTime: "40 minutes" }
+            },
+            wednesday: {
+              breakfast: { name: "Puri with Aloo Sabzi", prepTime: "20 minutes" },
+              lunch: { name: getProtein("Kadhi Pakora", "Lamb Curry"), prepTime: "50 minutes" },
+              dinner: { name: getDairy("Kheer with Puri"), prepTime: "30 minutes" }
+            }
+          };
+        } else {
             breakfast: { name: isKeto ? "Dhokla with Chutney" : "Fafda with Jalebi", prepTime: "15 minutes" },
             lunch: { name: "Undhiyu with Puri", prepTime: "45 minutes" },
             dinner: { name: "Rotli with Shaak", prepTime: "25 minutes" }
@@ -627,7 +704,7 @@ const MealPlanner = () => {
               Yummurai Meal Planner
             </h1>
             <p className="text-gray-600 dark:text-gray-300 mt-1">
-              Generate personalized meal plans for {region} • {config.currency} pricing
+              Generate personalized meal plans for {region} • {config?.currency || '$'} pricing
             </p>
           </div>
           
@@ -682,9 +759,9 @@ const MealPlanner = () => {
                 onChange={(e) => setPreferences(prev => ({ ...prev, budget: e.target.value }))}
                 className="input-field"
               >
-                <option value="low">Budget-friendly ({config.pricing.budgetLevels.low})</option>
-                <option value="medium">Moderate ({config.pricing.budgetLevels.medium})</option>
-                <option value="high">Premium ({config.pricing.budgetLevels.high})</option>
+                <option value="low">Budget-friendly ({config?.pricing?.budgetLevels?.low || 'Low budget'})</option>
+                <option value="medium">Moderate ({config?.pricing?.budgetLevels?.medium || 'Medium budget'})</option>
+                <option value="high">Premium ({config?.pricing?.budgetLevels?.high || 'High budget'})</option>
               </select>
             </div>
           </div>
