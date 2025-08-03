@@ -40,7 +40,7 @@ const MealPlanner = () => {
     const selectedCuisines = preferences.cuisinePreferences;
     const dietaryRestrictions = preferences.dietaryRestrictions;
     
-    // Dietary restrictions
+    // Parse dietary restrictions
     const isVegetarian = dietaryRestrictions.includes('vegetarian');
     const isVegan = dietaryRestrictions.includes('vegan');
     const isGlutenFree = dietaryRestrictions.includes('gluten-free');
@@ -48,704 +48,356 @@ const MealPlanner = () => {
     const isKeto = dietaryRestrictions.includes('keto');
     const isPaleo = dietaryRestrictions.includes('paleo');
     const isLowCarb = dietaryRestrictions.includes('low-carb');
-    // Mediterranean is a cuisine, not a dietary restriction
-    const isMediterraneanCuisine = selectedCuisines.includes('mediterranean');
     
-    // Cuisine preferences
+    // Parse cuisines
     const isSouthIndian = selectedCuisines.includes('south-indian');
     const isNorthIndian = selectedCuisines.includes('north-indian');
     const isGujarati = selectedCuisines.includes('gujarati');
     const isPunjabi = selectedCuisines.includes('punjabi');
-    const isBengali = selectedCuisines.includes('bengali');
+    const isMediterranean = selectedCuisines.includes('mediterranean');
     const isItalian = selectedCuisines.includes('italian');
-    const isChinese = selectedCuisines.includes('chinese');
-    const isContinental = selectedCuisines.includes('continental');
-    const isAmerican = selectedCuisines.includes('american');
     const isMexican = selectedCuisines.includes('mexican');
-    const isAsian = selectedCuisines.includes('asian');
-    const isThai = selectedCuisines.includes('thai');
-    const isJapanese = selectedCuisines.includes('japanese');
-    const isFrench = selectedCuisines.includes('french');
+    const isAsian = selectedCuisines.includes('asian') || selectedCuisines.includes('chinese') || selectedCuisines.includes('thai') || selectedCuisines.includes('japanese');
     
-    // Helper function to get appropriate protein
-    const getProtein = (defaultVeg, defaultNonVeg, ketoOption = null) => {
-      if (isVegan) return defaultVeg.replace(/paneer|cheese|yogurt|ghee/gi, 'tofu').replace(/milk/gi, 'coconut milk');
-      if (isVegetarian) return defaultVeg;
-      if (isKeto && ketoOption) return ketoOption;
-      return defaultNonVeg;
+    // COMPREHENSIVE SMART SUBSTITUTION SYSTEM
+    const getProtein = (vegOption, nonVegOption, ketoVegOption = null, ketoNonVegOption = null) => {
+      if (isVegan) {
+        return vegOption
+          .replace(/paneer|cheese|yogurt|ghee|butter/gi, 'tofu')
+          .replace(/milk/gi, 'coconut milk')
+          .replace(/egg/gi, 'chickpea flour');
+      }
+      if (isVegetarian) {
+        if (isKeto && ketoVegOption) return ketoVegOption;
+        return vegOption;
+      }
+      if (isKeto && ketoNonVegOption) return ketoNonVegOption;
+      return nonVegOption;
     };
     
-    // Helper function to get appropriate grains
-    const getGrain = (defaultGrain, glutenFreeOption = 'rice', lowCarbOption = 'cauliflower rice') => {
-      if (isGlutenFree) return glutenFreeOption;
-      if (isKeto || isLowCarb) return lowCarbOption;
+    const getGrain = (defaultGrain, glutenFreeAlt = 'rice', lowCarbAlt = 'cauliflower rice') => {
+      if (isKeto || isLowCarb) return lowCarbAlt;
+      if (isGlutenFree) return glutenFreeAlt;
+      if (isPaleo) return 'sweet potato';
       return defaultGrain;
     };
     
-    // Helper function to get dairy alternatives
-    const getDairy = (defaultDairy, dairyFreeOption = 'coconut milk') => {
-      if (isVegan || isDairyFree) return dairyFreeOption;
+    const getDairy = (defaultDairy, altOption = 'coconut milk') => {
+      if (isVegan || isDairyFree) return altOption;
       return defaultDairy;
+    };
+    
+    const getBread = (defaultBread) => {
+      if (isKeto || isLowCarb) return 'lettuce wraps';
+      if (isGlutenFree) return 'rice bread';
+      if (isPaleo) return 'sweet potato slices';
+      return defaultBread;
+    };
+    
+    const getSpice = (defaultSpice, paleoAlt = 'herbs') => {
+      if (isPaleo) return paleoAlt;
+      return defaultSpice;
     };
 
     let weekPlan = {};
-    let shoppingList = {};
     let cuisineType = '';
-
+    
+    // Generate meal plans based on region and cuisine
     if (isIndian) {
-      // INDIAN CUISINE COMBINATIONS
       if (isSouthIndian) {
         cuisineType = 'South Indian';
         weekPlan = {
           monday: {
-            breakfast: { 
-              name: isGlutenFree ? "Rice Idli with Sambar" : "Idli with Sambar and Coconut Chutney", 
-              prepTime: "20 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                isKeto ? "Coconut Fish Curry (no rice)" : "Sambar Rice with Rasam",
-                isKeto ? "Spicy Fish Curry with Coconut" : "Fish Curry with Rice"
-              ), 
-              prepTime: "35 minutes" 
-            },
-            dinner: { 
-              name: isGlutenFree ? "Rice Dosa with Potato Curry" : "Dosa with Potato Curry", 
-              prepTime: "25 minutes" 
-            }
+            breakfast: { name: isGlutenFree ? "Rice Idli with Sambar" : "Idli with Sambar", prepTime: "20 minutes" },
+            lunch: { name: getProtein("Sambar Rice with Rasam", "Fish Curry with " + getGrain("Rice")), prepTime: "35 minutes" },
+            dinner: { name: "Dosa with Potato Curry", prepTime: "25 minutes" }
           },
           tuesday: {
-            breakfast: { 
-              name: isGlutenFree ? "Rice Upma with Coconut Chutney" : "Upma with Coconut Chutney", 
-              prepTime: "15 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                isKeto ? "Coconut Vegetable Curry" : "Curd Rice with Pickle",
-                isKeto ? "Chicken Chettinad (no rice)" : "Chicken Chettinad with Rice"
-              ), 
-              prepTime: "30 minutes" 
-            },
-            dinner: { 
-              name: "Uttapam with Sambar", 
-              prepTime: "20 minutes" 
-            }
+            breakfast: { name: "Upma with Coconut Chutney", prepTime: "15 minutes" },
+            lunch: { name: getProtein("Curd Rice with Pickle", "Chicken Chettinad with " + getGrain("Rice")), prepTime: "30 minutes" },
+            dinner: { name: "Uttapam with Sambar", prepTime: "20 minutes" }
           },
           wednesday: {
-            breakfast: { 
-              name: "Rava Dosa with Chutney", 
-              prepTime: "18 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                isKeto ? "Vegetable Avial with Coconut" : "Vegetable Biryani",
-                isKeto ? "Mutton Pepper Fry" : "Mutton Biryani"
-              ), 
-              prepTime: "45 minutes" 
-            },
-            dinner: { 
-              name: "Appam with Vegetable Stew", 
-              prepTime: "30 minutes" 
-            }
+            breakfast: { name: "Rava Dosa with Chutney", prepTime: "18 minutes" },
+            lunch: { name: getProtein("Vegetable Biryani", "Mutton Biryani"), prepTime: "45 minutes" },
+            dinner: { name: "Appam with Vegetable Stew", prepTime: "30 minutes" }
           }
         };
-        
-        shoppingList = {
-          grains: isGlutenFree ? ["rice", "rice flour"] : ["rice", "wheat flour", "semolina", "rava"],
-          vegetables: ["onions", "tomatoes", "potatoes", "green chilies", "ginger", "garlic", "curry leaves", "coconut"],
-          spices: ["turmeric", "cumin", "coriander", "mustard seeds", "hing", "black pepper", "cardamom"],
-          proteins: getProtein(
-            ["dal", "coconut", "vegetables"], 
-            ["fish", "chicken", "mutton", "eggs"],
-            ["fish", "chicken", "coconut"]
-          ),
-          dairy: getDairy(["yogurt", "buttermilk"], ["coconut milk", "coconut oil"])
-        };
-      }
-      
-      else if (isNorthIndian) {
+      } else if (isNorthIndian) {
         cuisineType = 'North Indian';
         weekPlan = {
           monday: {
-            breakfast: { 
-              name: isGlutenFree ? "Poha with Vegetables" : getDairy("Aloo Paratha with Yogurt", "Aloo Paratha with Coconut Chutney"), 
-              prepTime: "20 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                isKeto ? "Palak Paneer (no rice)" : "Dal Makhani with " + getGrain("Rice", "Rice", "Cauliflower Rice"),
-                isKeto ? "Butter Chicken (no naan)" : "Butter Chicken with " + getGrain("Naan", "Rice Naan", "Lettuce Wraps")
-              ), 
-              prepTime: "35 minutes" 
-            },
-            dinner: { 
-              name: getGrain("Roti", "Rice Roti", "Cauliflower Roti") + " with Palak Paneer", 
-              prepTime: "25 minutes" 
-            }
+            breakfast: { name: getDairy("Aloo Paratha with Yogurt"), prepTime: "25 minutes" },
+            lunch: { name: getProtein("Dal Makhani with " + getGrain("Rice"), "Butter Chicken with Naan"), prepTime: "40 minutes" },
+            dinner: { name: "Roti with Palak Paneer", prepTime: "30 minutes" }
           },
           tuesday: {
-            breakfast: { 
-              name: "Poha with Tea", 
-              prepTime: "12 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                "Rajma with " + getGrain("Rice", "Rice", "Cauliflower Rice"),
-                "Chicken Curry with " + getGrain("Rice", "Rice", "Cauliflower Rice")
-              ), 
-              prepTime: "40 minutes" 
-            },
-            dinner: { 
-              name: getGrain("Chapati", "Rice Chapati", "Lettuce Wraps") + " with Mixed Dal", 
-              prepTime: "25 minutes" 
-            }
+            breakfast: { name: "Poha with Tea", prepTime: "12 minutes" },
+            lunch: { name: getProtein("Rajma with " + getGrain("Rice"), "Chicken Curry with " + getGrain("Rice")), prepTime: "45 minutes" },
+            dinner: { name: "Chapati with Mixed Dal", prepTime: "25 minutes" }
           },
           wednesday: {
-            breakfast: { 
-              name: isGlutenFree ? "Stuffed Rice Paratha with Pickle" : "Stuffed Paratha with Pickle", 
-              prepTime: "25 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                isKeto ? "Chole Masala (no bhature)" : "Chole Bhature",
-                isKeto ? "Lamb Curry (no rice)" : "Lamb Curry with Rice"
-              ), 
-              prepTime: "45 minutes" 
-            },
-            dinner: { 
-              name: "Khichdi with " + getDairy("Ghee", "Coconut Oil"), 
-              prepTime: "20 minutes" 
-            }
+            breakfast: { name: "Stuffed Paratha with Pickle", prepTime: "30 minutes" },
+            lunch: { name: getProtein("Chole Bhature", "Lamb Curry with " + getGrain("Rice")), prepTime: "50 minutes" },
+            dinner: { name: "Khichdi with " + getDairy("Ghee"), prepTime: "20 minutes" }
           }
         };
-        
-        shoppingList = {
-          grains: isGlutenFree ? ["rice", "rice flour"] : ["wheat flour", "rice", "dal"],
-          vegetables: ["onions", "tomatoes", "potatoes", "spinach", "green chilies", "ginger", "garlic"],
-          spices: ["turmeric", "cumin", "coriander", "garam masala", "red chili powder", "hing"],
-          proteins: getProtein(
-            ["paneer", "dal", "chickpeas", "rajma"], 
-            ["chicken", "lamb", "mutton"],
-            ["paneer", "chicken", "lamb"]
-          ),
-          dairy: getDairy(["yogurt", "milk", "ghee", "butter"], ["coconut milk", "coconut oil"])
-        };
-      }
-      
-      else if (isPunjabi) {
+      } else if (isPunjabi) {
         cuisineType = 'Punjabi';
         weekPlan = {
           monday: {
-            breakfast: { 
-              name: isGlutenFree ? "Makki Roti with Sarson Saag" : "Aloo Paratha with Lassi", 
-              prepTime: "25 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                "Dal Makhani with " + getGrain("Rice", "Rice", "Cauliflower Rice"),
-                "Butter Chicken with " + getGrain("Naan", "Rice", "Lettuce Wraps")
-              ), 
-              prepTime: "40 minutes" 
-            },
-            dinner: { 
-              name: getGrain("Roti", "Rice Roti", "Cauliflower Roti") + " with Rajma", 
-              prepTime: "30 minutes" 
-            }
+            breakfast: { name: "Makki Roti with Sarson Saag", prepTime: "30 minutes" },
+            lunch: { name: getProtein("Dal Makhani with " + getGrain("Rice"), "Butter Chicken with Naan"), prepTime: "45 minutes" },
+            dinner: { name: "Roti with Rajma", prepTime: "35 minutes" }
           },
           tuesday: {
-            breakfast: { 
-              name: "Chole Kulche", 
-              prepTime: "20 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                "Palak Paneer with Rice",
-                "Chicken Tikka Masala with Rice"
-              ), 
-              prepTime: "35 minutes" 
-            },
-            dinner: { 
-              name: "Sarson Saag with Makki Roti", 
-              prepTime: "35 minutes" 
-            }
+            breakfast: { name: "Chole Kulche", prepTime: "25 minutes" },
+            lunch: { name: getProtein("Palak Paneer with " + getGrain("Rice"), "Chicken Tikka Masala"), prepTime: "40 minutes" },
+            dinner: { name: "Sarson Saag with Makki Roti", prepTime: "40 minutes" }
           },
           wednesday: {
-            breakfast: { 
-              name: "Puri with Aloo Sabzi", 
-              prepTime: "20 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                "Kadhi Pakora with Rice",
-                "Lamb Curry with Rice"
-              ), 
-              prepTime: "45 minutes" 
-            },
-            dinner: { 
-              name: "Kheer with Puri", 
-              prepTime: "25 minutes" 
-            }
+            breakfast: { name: "Puri with Aloo Sabzi", prepTime: "20 minutes" },
+            lunch: { name: getProtein("Kadhi Pakora", "Lamb Curry"), prepTime: "50 minutes" },
+            dinner: { name: getDairy("Kheer with Puri"), prepTime: "30 minutes" }
           }
         };
-      }
-      
-      else if (isGujarati) {
+      } else if (isGujarati) {
         cuisineType = 'Gujarati';
         weekPlan = {
           monday: {
-            breakfast: { 
-              name: "Dhokla with Green Chutney", 
-              prepTime: "15 minutes" 
-            },
-            lunch: { 
-              name: "Gujarati Thali (Dal, Sabzi, " + getGrain("Roti", "Rice Roti", "Lettuce Wraps") + ")", 
-              prepTime: "30 minutes" 
-            },
-            dinner: { 
-              name: "Khichdi with Kadhi", 
-              prepTime: "25 minutes" 
-            }
+            breakfast: { name: "Dhokla with Green Chutney", prepTime: "20 minutes" },
+            lunch: { name: "Gujarati Thali (Dal, Sabzi, Roti)", prepTime: "35 minutes" },
+            dinner: { name: "Khichdi with Kadhi", prepTime: "30 minutes" }
           },
           tuesday: {
-            breakfast: { 
-              name: isKeto ? "Dhokla with Chutney" : "Fafda with Jalebi", 
-              prepTime: "10 minutes" 
-            },
-            lunch: { 
-              name: "Undhiyu with " + getGrain("Puri", "Rice Puri", "Vegetable Salad"), 
-              prepTime: "40 minutes" 
-            },
-            dinner: { 
-              name: getGrain("Rotli", "Rice Rotli", "Lettuce Wraps") + " with Shaak", 
-              prepTime: "20 minutes" 
-            }
+            breakfast: { name: isKeto ? "Dhokla with Chutney" : "Fafda with Jalebi", prepTime: "15 minutes" },
+            lunch: { name: "Undhiyu with Puri", prepTime: "45 minutes" },
+            dinner: { name: "Rotli with Shaak", prepTime: "25 minutes" }
           },
           wednesday: {
-            breakfast: { 
-              name: "Handvo with Chutney", 
-              prepTime: "20 minutes" 
-            },
-            lunch: { 
-              name: "Dal Dhokli", 
-              prepTime: "35 minutes" 
-            },
-            dinner: { 
-              name: isKeto ? "Vegetable Curry" : "Kheer with Puri", 
-              prepTime: "25 minutes" 
-            }
+            breakfast: { name: "Handvo with Chutney", prepTime: "25 minutes" },
+            lunch: { name: "Dal Dhokli", prepTime: "40 minutes" },
+            dinner: { name: isKeto ? "Vegetable Curry" : "Kheer with Puri", prepTime: "30 minutes" }
           }
         };
-      }
-      
-      else {
-        // Default Indian with mixed cuisines
+      } else {
+        // Default Indian
         cuisineType = 'Mixed Indian';
         weekPlan = {
           monday: {
-            breakfast: { 
-              name: isVegan ? "Poha with Vegetables" : "Idli with Sambar", 
-              prepTime: "15 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                "Dal Rice with Sabzi",
-                "Chicken Curry with Rice"
-              ), 
-              prepTime: "30 minutes" 
-            },
-            dinner: { 
-              name: getGrain("Roti", "Rice", "Cauliflower Rice") + " with Dal and Vegetables", 
-              prepTime: "25 minutes" 
-            }
+            breakfast: { name: "Idli with Sambar", prepTime: "15 minutes" },
+            lunch: { name: getProtein("Dal Rice with Sabzi", "Chicken Curry with " + getGrain("Rice")), prepTime: "30 minutes" },
+            dinner: { name: getGrain("Roti") + " with Dal and Vegetables", prepTime: "25 minutes" }
           },
           tuesday: {
-            breakfast: { 
-              name: "Upma with Coconut Chutney", 
-              prepTime: "12 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                "Rajma Rice",
-                "Fish Curry with Rice"
-              ), 
-              prepTime: "35 minutes" 
-            },
-            dinner: { 
-              name: getGrain("Chapati", "Rice Chapati", "Lettuce Wraps") + " with Paneer Curry", 
-              prepTime: "30 minutes" 
-            }
+            breakfast: { name: "Upma with Coconut Chutney", prepTime: "12 minutes" },
+            lunch: { name: getProtein("Rajma " + getGrain("Rice"), "Fish Curry with " + getGrain("Rice")), prepTime: "35 minutes" },
+            dinner: { name: "Chapati with Paneer Curry", prepTime: "30 minutes" }
           },
           wednesday: {
-            breakfast: { 
-              name: "Dosa with Sambar", 
-              prepTime: "20 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                "Chole with Rice",
-                "Mutton Curry with Rice"
-              ), 
-              prepTime: "40 minutes" 
-            },
-            dinner: { 
-              name: "Khichdi with " + getDairy("Yogurt", "Coconut Milk"), 
-              prepTime: "20 minutes" 
-            }
+            breakfast: { name: "Dosa with Sambar", prepTime: "20 minutes" },
+            lunch: { name: getProtein("Chole with " + getGrain("Rice"), "Mutton Curry with " + getGrain("Rice")), prepTime: "40 minutes" },
+            dinner: { name: "Khichdi with " + getDairy("Yogurt"), prepTime: "20 minutes" }
           }
         };
       }
-      
-      // Default Indian shopping list if not set above
-      if (!shoppingList.grains) {
-        shoppingList = {
-          grains: isGlutenFree ? ["rice", "rice flour"] : ["rice", "wheat flour", "dal", "semolina"],
-          vegetables: ["onions", "tomatoes", "potatoes", "green chilies", "ginger", "garlic", "curry leaves"],
-          spices: ["turmeric", "cumin", "coriander", "garam masala", "mustard seeds", "hing"],
-          proteins: getProtein(
-            ["paneer", "dal", "chickpeas", "coconut"], 
-            ["chicken", "fish", "mutton", "eggs"],
-            ["paneer", "chicken", "fish"]
-          ),
-          dairy: getDairy(["yogurt", "milk", "ghee"], ["coconut milk", "coconut oil"])
-        };
-      }
-    } 
-    
-    else {
-      // USA/INTERNATIONAL CUISINE COMBINATIONS
-      if (isItalian) {
-        cuisineType = 'Italian';
-        weekPlan = {
-          monday: {
-            breakfast: { 
-              name: isKeto ? "Italian Frittata" : "Cappuccino with Cornetto", 
-              prepTime: "15 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                isKeto ? "Caprese Salad with Mozzarella" : "Pasta Primavera",
-                isKeto ? "Chicken Parmigiana (no pasta)" : "Chicken Alfredo Pasta"
-              ), 
-              prepTime: "25 minutes" 
-            },
-            dinner: { 
-              name: getProtein(
-                isKeto ? "Eggplant Parmigiana" : "Margherita Pizza",
-                isKeto ? "Osso Buco" : "Spaghetti Bolognese"
-              ), 
-              prepTime: "35 minutes" 
-            }
-          },
-          tuesday: {
-            breakfast: { 
-              name: "Italian Yogurt with Berries", 
-              prepTime: "5 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                "Minestrone Soup",
-                "Chicken Cacciatore"
-              ), 
-              prepTime: "30 minutes" 
-            },
-            dinner: { 
-              name: getProtein(
-                "Risotto with Mushrooms",
-                "Veal Marsala"
-              ), 
-              prepTime: "40 minutes" 
-            }
-          },
-          wednesday: {
-            breakfast: { 
-              name: "Espresso with Biscotti", 
-              prepTime: "5 minutes" 
-            },
-            lunch: { 
-              name: "Caesar Salad with Parmesan", 
-              prepTime: "10 minutes" 
-            },
-            dinner: { 
-              name: getProtein(
-                "Pasta Arrabbiata",
-                "Seafood Linguine"
-              ), 
-              prepTime: "25 minutes" 
-            }
-          }
-        };
-      }
-      
-      else if (isMexican) {
-        cuisineType = 'Mexican';
-        weekPlan = {
-          monday: {
-            breakfast: { 
-              name: isKeto ? "Mexican Scrambled Eggs" : "Huevos Rancheros", 
-              prepTime: "15 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                isKeto ? "Burrito Bowl (no rice)" : "Black Bean Burrito",
-                isKeto ? "Chicken Fajita Bowl" : "Chicken Burrito"
-              ), 
-              prepTime: "20 minutes" 
-            },
-            dinner: { 
-              name: getProtein(
-                isKeto ? "Veggie Taco Salad" : "Vegetable Enchiladas",
-                isKeto ? "Carne Asada Salad" : "Beef Tacos"
-              ), 
-              prepTime: "25 minutes" 
-            }
-          },
-          tuesday: {
-            breakfast: { 
-              name: "Mexican Smoothie Bowl", 
-              prepTime: "8 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                "Quinoa Stuffed Peppers",
-                "Chicken Quesadilla"
-              ), 
-              prepTime: "25 minutes" 
-            },
-            dinner: { 
-              name: "Chiles Rellenos", 
-              prepTime: "30 minutes" 
-            }
-          },
-          wednesday: {
-            breakfast: { 
-              name: "Chilaquiles", 
-              prepTime: "20 minutes" 
-            },
-            lunch: { 
-              name: "Pozole Soup", 
-              prepTime: "35 minutes" 
-            },
-            dinner: { 
-              name: getProtein(
-                "Vegetable Tamales",
-                "Fish Tacos"
-              ), 
-              prepTime: "40 minutes" 
-            }
-          }
-        };
-      }
-      
-      else if (isAsian || isThai || isJapanese || isChinese) {
-        cuisineType = isJapanese ? 'Japanese' : isThai ? 'Thai' : isChinese ? 'Chinese' : 'Asian';
-        weekPlan = {
-          monday: {
-            breakfast: { 
-              name: isJapanese ? "Miso Soup with Rice" : isThai ? "Thai Coconut Porridge" : "Congee with Vegetables", 
-              prepTime: "15 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                isJapanese ? "Vegetable Sushi Bowl" : isThai ? "Pad Thai with Tofu" : "Vegetable Fried Rice",
-                isJapanese ? "Chicken Teriyaki" : isThai ? "Thai Basil Chicken" : "Sweet and Sour Chicken"
-              ), 
-              prepTime: "25 minutes" 
-            },
-            dinner: { 
-              name: getProtein(
-                isJapanese ? "Vegetable Ramen" : isThai ? "Green Curry with Vegetables" : "Ma Po Tofu",
-                isJapanese ? "Salmon Teriyaki" : isThai ? "Thai Fish Curry" : "Kung Pao Chicken"
-              ), 
-              prepTime: "30 minutes" 
-            }
-          },
-          tuesday: {
-            breakfast: { 
-              name: isJapanese ? "Japanese Pancakes" : "Asian Smoothie Bowl", 
-              prepTime: "12 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                isJapanese ? "Vegetable Bento" : "Tofu Stir Fry",
-                isJapanese ? "Chicken Katsu" : "Beef Stir Fry"
-              ), 
-              prepTime: "20 minutes" 
-            },
-            dinner: { 
-              name: isJapanese ? "Miso Glazed Eggplant" : isThai ? "Tom Yum Soup" : "Hot Pot", 
-              prepTime: "35 minutes" 
-            }
-          },
-          wednesday: {
-            breakfast: { 
-              name: "Green Tea with Rice Cakes", 
-              prepTime: "5 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                "Vegetable Spring Rolls",
-                "Chicken Satay"
-              ), 
-              prepTime: "18 minutes" 
-            },
-            dinner: { 
-              name: getProtein(
-                isJapanese ? "Vegetable Tempura" : "Buddha's Delight",
-                isJapanese ? "Beef Sukiyaki" : "Peking Duck"
-              ), 
-              prepTime: "40 minutes" 
-            }
-          }
-        };
-      }
-      
-      else if (isMediterraneanCuisine) {
+    } else {
+      // International cuisines
+      if (isMediterranean) {
         cuisineType = 'Mediterranean';
         weekPlan = {
           monday: {
-            breakfast: { 
-              name: "Greek Yogurt with Honey and Nuts", 
-              prepTime: "5 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                "Mediterranean Quinoa Bowl",
-                "Grilled Chicken Greek Salad"
-              ), 
-              prepTime: "15 minutes" 
-            },
-            dinner: { 
-              name: getProtein(
-                "Stuffed Bell Peppers",
-                "Grilled Fish with Lemon"
-              ), 
-              prepTime: "30 minutes" 
-            }
+            breakfast: { name: getDairy("Greek Yogurt with Honey and Nuts"), prepTime: "5 minutes" },
+            lunch: { name: getProtein("Mediterranean Quinoa Bowl", "Grilled Chicken Greek Salad"), prepTime: "15 minutes" },
+            dinner: { name: getProtein("Stuffed Bell Peppers", "Grilled Fish with Lemon"), prepTime: "35 minutes" }
           },
           tuesday: {
-            breakfast: { 
-              name: "Mediterranean Omelet", 
-              prepTime: "10 minutes" 
-            },
-            lunch: { 
-              name: "Hummus with Pita and Vegetables", 
-              prepTime: "8 minutes" 
-            },
-            dinner: { 
-              name: getProtein(
-                "Ratatouille",
-                "Lamb Souvlaki"
-              ), 
-              prepTime: "35 minutes" 
-            }
+            breakfast: { name: "Mediterranean Omelet", prepTime: "12 minutes" },
+            lunch: { name: "Hummus with Pita and Vegetables", prepTime: "8 minutes" },
+            dinner: { name: getProtein("Ratatouille", "Lamb Souvlaki"), prepTime: "40 minutes" }
           },
           wednesday: {
-            breakfast: { 
-              name: "Feta and Spinach Scramble", 
-              prepTime: "12 minutes" 
-            },
-            lunch: { 
-              name: "Tabbouleh Salad", 
-              prepTime: "10 minutes" 
-            },
-            dinner: { 
-              name: getProtein(
-                "Vegetarian Moussaka",
-                "Seafood Paella"
-              ), 
-              prepTime: "45 minutes" 
-            }
+            breakfast: { name: getDairy("Feta and Spinach Scramble"), prepTime: "15 minutes" },
+            lunch: { name: "Tabbouleh Salad", prepTime: "10 minutes" },
+            dinner: { name: getProtein("Vegetarian Moussaka", "Seafood Paella"), prepTime: "50 minutes" }
           }
         };
-      }
-      
-      else {
-        // Default American/Continental
+      } else if (isItalian) {
+        cuisineType = 'Italian';
+        weekPlan = {
+          monday: {
+            breakfast: { name: "Cappuccino with Cornetto", prepTime: "10 minutes" },
+            lunch: { name: getProtein(getGrain("Pasta Primavera"), "Chicken Alfredo"), prepTime: "25 minutes" },
+            dinner: { name: getProtein("Margherita Pizza", "Spaghetti Bolognese"), prepTime: "35 minutes" }
+          },
+          tuesday: {
+            breakfast: { name: getDairy("Italian Yogurt with Berries"), prepTime: "5 minutes" },
+            lunch: { name: getProtein("Minestrone Soup", "Chicken Cacciatore"), prepTime: "30 minutes" },
+            dinner: { name: getProtein("Risotto with Mushrooms", "Veal Marsala"), prepTime: "40 minutes" }
+          },
+          wednesday: {
+            breakfast: { name: "Espresso with Biscotti", prepTime: "5 minutes" },
+            lunch: { name: getDairy("Caesar Salad with Parmesan"), prepTime: "10 minutes" },
+            dinner: { name: getProtein("Pasta Arrabbiata", "Seafood Linguine"), prepTime: "30 minutes" }
+          }
+        };
+      } else if (isMexican) {
+        cuisineType = 'Mexican';
+        weekPlan = {
+          monday: {
+            breakfast: { name: isKeto ? "Mexican Scrambled Eggs" : "Huevos Rancheros", prepTime: "15 minutes" },
+            lunch: { name: getProtein("Black Bean Burrito", "Chicken Burrito"), prepTime: "20 minutes" },
+            dinner: { name: getProtein("Vegetable Enchiladas", "Beef Tacos"), prepTime: "30 minutes" }
+          },
+          tuesday: {
+            breakfast: { name: "Mexican Smoothie Bowl", prepTime: "8 minutes" },
+            lunch: { name: getProtein("Quinoa Stuffed Peppers", "Chicken Quesadilla"), prepTime: "25 minutes" },
+            dinner: { name: "Chiles Rellenos", prepTime: "35 minutes" }
+          },
+          wednesday: {
+            breakfast: { name: "Chilaquiles", prepTime: "20 minutes" },
+            lunch: { name: "Pozole Soup", prepTime: "40 minutes" },
+            dinner: { name: getProtein("Vegetable Tamales", "Fish Tacos"), prepTime: "45 minutes" }
+          }
+        };
+      } else if (isAsian) {
+        cuisineType = 'Asian';
+        weekPlan = {
+          monday: {
+            breakfast: { name: "Congee with Vegetables", prepTime: "15 minutes" },
+            lunch: { name: getProtein("Vegetable Fried " + getGrain("Rice"), "Sweet and Sour Chicken"), prepTime: "25 minutes" },
+            dinner: { name: getProtein("Ma Po Tofu", "Kung Pao Chicken"), prepTime: "30 minutes" }
+          },
+          tuesday: {
+            breakfast: { name: "Asian Smoothie Bowl", prepTime: "12 minutes" },
+            lunch: { name: getProtein("Tofu Stir Fry", "Beef Stir Fry"), prepTime: "20 minutes" },
+            dinner: { name: "Hot Pot", prepTime: "35 minutes" }
+          },
+          wednesday: {
+            breakfast: { name: "Green Tea with Rice Cakes", prepTime: "5 minutes" },
+            lunch: { name: getProtein("Vegetable Spring Rolls", "Chicken Satay"), prepTime: "18 minutes" },
+            dinner: { name: getProtein("Buddha's Delight", "Peking Duck"), prepTime: "40 minutes" }
+          }
+        };
+      } else {
+        // Default American
         cuisineType = 'American';
         weekPlan = {
           monday: {
-            breakfast: { 
-              name: isKeto ? "Keto Scrambled Eggs with Avocado" : isVegan ? "Oatmeal with Berries" : "Scrambled Eggs with Toast", 
-              prepTime: "10 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                isKeto ? "Quinoa Salad Bowl" : "Quinoa Buddha Bowl",
-                isKeto ? "Grilled Chicken Salad" : "Grilled Chicken Salad"
-              ), 
-              prepTime: "15 minutes" 
-            },
-            dinner: { 
-              name: getProtein(
-                isKeto ? "Zucchini Noodles with Pesto" : "Pasta Primavera",
-                isKeto ? "Baked Salmon with Asparagus" : "Baked Salmon with Sweet Potato"
-              ), 
-              prepTime: "25 minutes" 
-            }
+            breakfast: { name: isVegan ? "Oatmeal with Berries" : "Scrambled Eggs with Toast", prepTime: "10 minutes" },
+            lunch: { name: getProtein("Quinoa Buddha Bowl", "Grilled Chicken Salad"), prepTime: "15 minutes" },
+            dinner: { name: getProtein(getGrain("Pasta Primavera"), "Baked Salmon with Sweet Potato"), prepTime: "30 minutes" }
           },
           tuesday: {
-            breakfast: { 
-              name: isVegan ? "Chia Pudding" : getDairy("Greek Yogurt Parfait", "Coconut Yogurt Parfait"), 
-              prepTime: "5 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                "Veggie Wrap",
-                "Turkey Sandwich"
-              ), 
-              prepTime: "8 minutes" 
-            },
-            dinner: { 
-              name: getProtein(
-                "Vegetable Stir Fry",
-                isKeto ? "Grilled Chicken with Broccoli" : "Grilled Chicken with Sweet Potato"
-              ), 
-              prepTime: "30 minutes" 
-            }
+            breakfast: { name: getDairy("Greek Yogurt Parfait"), prepTime: "5 minutes" },
+            lunch: { name: getProtein("Veggie Wrap", "Turkey Sandwich"), prepTime: "8 minutes" },
+            dinner: { name: getProtein("Vegetable Stir Fry", "Grilled Chicken with Sweet Potato"), prepTime: "25 minutes" }
           },
           wednesday: {
-            breakfast: { 
-              name: "Smoothie Bowl", 
-              prepTime: "8 minutes" 
-            },
-            lunch: { 
-              name: getProtein(
-                "Mediterranean Bowl",
-                "Chicken Caesar Salad"
-              ), 
-              prepTime: "12 minutes" 
-            },
-            dinner: { 
-              name: getProtein(
-                isKeto ? "Cauliflower Tacos" : "Black Bean Tacos",
-                isKeto ? "Beef Stir Fry with Vegetables" : "Beef Stir Fry"
-              ), 
-              prepTime: "20 minutes" 
-            }
+            breakfast: { name: "Smoothie Bowl", prepTime: "8 minutes" },
+            lunch: { name: getProtein("Mediterranean Bowl", "Chicken Caesar Salad"), prepTime: "12 minutes" },
+            dinner: { name: getProtein("Black Bean Tacos", "Beef Stir Fry"), prepTime: "20 minutes" }
           }
         };
       }
-      
-      // International shopping list
-      shoppingList = {
-        produce: isKeto ? 
-          ["avocado", "leafy greens", "broccoli", "cauliflower", "zucchini", "bell peppers"] :
-          ["berries", "bananas", "lettuce", "tomatoes", "sweet potato", "broccoli", "avocado"],
-        proteins: getProtein(
-          isKeto ? ["tofu", "nuts", "seeds", "avocado"] : ["quinoa", "black beans", "tofu", "nuts"],
-          isKeto ? ["chicken", "salmon", "beef", "eggs"] : ["chicken breast", "salmon", "turkey", "beef"],
-          ["chicken", "salmon", "beef", "eggs"]
-        ),
-        grains: isKeto ? 
-          ["cauliflower rice", "zucchini noodles"] :
-          isGlutenFree ? ["rice", "quinoa", "gluten-free oats"] :
-          ["oats", "bread", "pasta", "rice", "quinoa"],
-        dairy: getDairy(
-          isKeto ? ["cheese", "heavy cream"] : ["Greek yogurt", "cheese", "milk"],
-          isKeto ? ["coconut cream", "nutritional yeast"] : ["almond milk", "coconut yogurt", "nutritional yeast"]
-        )
-      };
     }
+
+    // COMPREHENSIVE SHOPPING LIST GENERATION
+    const generateAdvancedShoppingList = () => {
+      const baseList = {
+        grains: [],
+        vegetables: [],
+        proteins: [],
+        dairy: [],
+        spices: [],
+        produce: [],
+        pantry: [],
+        oils: []
+      };
+      
+      if (isIndian) {
+        // Indian-specific ingredients
+        baseList.grains = isKeto ? 
+          ['cauliflower rice', 'almond flour', 'coconut flour'] : 
+          isGlutenFree ? 
+            ['rice', 'rice flour', 'quinoa', 'millet'] : 
+            ['rice', 'wheat flour', 'dal (lentils)', 'semolina', 'besan'];
+            
+        baseList.vegetables = [
+          'onions', 'tomatoes', 'green chilies', 'ginger', 'garlic', 
+          'curry leaves', 'coriander leaves', 'mint leaves',
+          ...(isSouthIndian ? ['coconut', 'drumsticks', 'okra'] : []),
+          ...(isNorthIndian ? ['spinach', 'cauliflower', 'peas'] : []),
+          ...(isPunjabi ? ['mustard greens', 'radish', 'turnip'] : []),
+          ...(isGujarati ? ['bottle gourd', 'bitter gourd', 'fenugreek leaves'] : [])
+        ];
+        
+        baseList.spices = [
+          'turmeric', 'cumin seeds', 'coriander seeds', 'mustard seeds',
+          'fenugreek seeds', 'cardamom', 'cinnamon', 'cloves',
+          'red chili powder', 'garam masala', 'hing (asafoetida)',
+          ...(isSouthIndian ? ['curry powder', 'sambar powder', 'rasam powder'] : []),
+          ...(isNorthIndian ? ['kasoori methi', 'amchur', 'chaat masala'] : []),
+          ...(isPunjabi ? ['black cardamom', 'bay leaves', 'fennel seeds'] : [])
+        ];
+        
+        baseList.proteins = isVegetarian ? 
+          ['paneer', 'tofu', 'dal varieties', 'chickpeas', 'rajma', 'chana dal'] :
+          ['chicken', 'fish', 'mutton', 'eggs', 'paneer', 'dal varieties'];
+          
+        baseList.dairy = isVegan || isDairyFree ? 
+          ['coconut milk', 'coconut oil', 'cashew cream'] :
+          ['yogurt', 'milk', 'ghee', 'butter', 'cream'];
+          
+        baseList.oils = ['mustard oil', 'coconut oil', 'sesame oil'];
+        
+      } else {
+        // International ingredients
+        baseList.produce = isKeto ? 
+          ['avocado', 'leafy greens', 'broccoli', 'cauliflower', 'zucchini', 'bell peppers', 'asparagus'] :
+          ['berries', 'bananas', 'apples', 'lettuce', 'tomatoes', 'cucumbers', 'carrots'];
+          
+        baseList.grains = isKeto ? 
+          ['cauliflower rice', 'zucchini noodles', 'shirataki noodles'] :
+          isGlutenFree ? 
+            ['rice', 'quinoa', 'gluten-free oats', 'rice pasta'] :
+            ['oats', 'bread', 'pasta', 'rice', 'quinoa'];
+            
+        baseList.proteins = isVegetarian ?
+          (isKeto ? ['tofu', 'tempeh', 'nuts', 'seeds', 'cheese'] : ['tofu', 'beans', 'lentils', 'quinoa', 'nuts']) :
+          (isKeto ? ['chicken', 'salmon', 'beef', 'eggs', 'cheese'] : ['chicken breast', 'salmon', 'turkey', 'beef', 'eggs']);
+          
+        baseList.dairy = isVegan || isDairyFree ?
+          (isKeto ? ['coconut cream', 'almond milk', 'nutritional yeast'] : ['almond milk', 'coconut yogurt', 'cashew cheese']) :
+          (isKeto ? ['heavy cream', 'cheese', 'butter'] : ['Greek yogurt', 'milk', 'cheese']);
+          
+        baseList.spices = isMediterranean ? 
+          ['oregano', 'basil', 'thyme', 'rosemary', 'olive oil', 'lemon'] :
+          isItalian ?
+            ['basil', 'oregano', 'garlic', 'parmesan', 'olive oil'] :
+            isMexican ?
+              ['cumin', 'chili powder', 'paprika', 'lime', 'cilantro'] :
+              ['black pepper', 'salt', 'garlic powder', 'herbs'];
+              
+        baseList.oils = ['olive oil', 'avocado oil', 'coconut oil'];
+      }
+      
+      // Add paleo-specific items
+      if (isPaleo) {
+        baseList.pantry = ['coconut flour', 'almond flour', 'honey', 'coconut aminos'];
+        baseList.proteins = baseList.proteins.filter(p => !p.includes('bean') && !p.includes('lentil'));
+      }
+      
+      // Add keto-specific items
+      if (isKeto) {
+        baseList.pantry = [...(baseList.pantry || []), 'MCT oil', 'stevia', 'erythritol', 'psyllium husk'];
+        baseList.dairy = [...baseList.dairy, 'heavy cream', 'cream cheese'];
+      }
+      
+      return baseList;
+    };
+
+    const shoppingList = generateAdvancedShoppingList();
 
     // Generate dietary restriction summary
     const restrictionSummary = [];
@@ -765,12 +417,12 @@ const MealPlanner = () => {
       shoppingList,
       nutritionalSummary: {
         averageCaloriesPerDay: isKeto ? "1600-1800 calories" : "1800-2000 calories",
-        balanceNotes: `Well-balanced ${cuisineType} meals${restrictionText}. Tailored for ${region} preferences with appropriate portion sizes for ${preferences.servings} ${preferences.servings === 1 ? 'person' : 'people'}.`
+        balanceNotes: `Well-balanced ${cuisineType} meals${restrictionText}. Optimized for ${region} preferences with ${preferences.servings} ${preferences.servings === 1 ? 'person' : 'people'}.`
       }
     };
   };
 
-  const handleGeneratePlan = () => {
+  const handleGeneratePlan = async () => {
     if (!canGenerateMealPlan()) {
       alert('You have reached your weekly limit. Upgrade to Premium for unlimited plans!');
       return;
@@ -778,13 +430,46 @@ const MealPlanner = () => {
 
     setLoading(true);
     
-    // Simulate loading for UI demo
-    setTimeout(() => {
-      const samplePlan = generateRegionalMealPlan();
-      setMealPlan(samplePlan);
-      incrementMealPlanUsage();
+    try {
+      console.log('🚀 Starting meal plan generation...');
+      
+      // Use local generation (no AI for now)
+      console.log('📝 Using local meal plan generation...');
+      const generatedPlan = generateRegionalMealPlan();
+      console.log('✅ Local meal plan generated successfully');
+      
+      // Save meal plan to database
+      if (user) {
+        try {
+          console.log('💾 Saving meal plan to database...');
+          const { saveMealPlan } = await import('../lib/supabase');
+          const { error: saveError } = await saveMealPlan(user.id, generatedPlan, preferences);
+          
+          if (saveError) {
+            console.error('❌ Error saving meal plan:', saveError);
+            // Don't fail the whole process if save fails
+            console.log('⚠️ Continuing without saving to database');
+          } else {
+            console.log('✅ Meal plan saved to database');
+          }
+        } catch (saveError) {
+          console.error('❌ Exception saving meal plan:', saveError);
+          console.log('⚠️ Continuing without saving to database');
+        }
+      }
+      
+      // Update UI and usage count
+      setMealPlan(generatedPlan);
+      await incrementMealPlanUsage();
+      
+      console.log('🎉 Meal plan generation completed successfully');
+      
+    } catch (error) {
+      console.error('❌ Error generating meal plan:', error);
+      alert('Failed to generate meal plan. Please try again.');
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   };
 
   const renderMealPlan = () => {
@@ -903,7 +588,7 @@ const MealPlanner = () => {
           {/* Basic Settings */}
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 <Users className="inline w-4 h-4 mr-1" />
                 Number of Servings
               </label>

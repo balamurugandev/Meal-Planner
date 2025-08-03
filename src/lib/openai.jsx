@@ -1,7 +1,12 @@
-// Mock OpenAI functions for development
-// Replace with real OpenAI implementation when ready
+import OpenAI from 'openai';
 
-export const generateMealPlan = async (userPreferences) => {
+// OpenAI configuration
+const openai = new OpenAI({
+  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+  dangerouslyAllowBrowser: true // Note: In production, move this to backend
+});
+
+export const generateMealPlan = async (userPreferences, region = 'India') => {
   const {
     dietaryRestrictions = [],
     allergies = [],
@@ -11,199 +16,254 @@ export const generateMealPlan = async (userPreferences) => {
     dislikes = []
   } = userPreferences;
 
-  // Mock meal plan data
-  const mockMealPlan = {
-    weekPlan: {
-      monday: {
-        breakfast: {
-          name: "Avocado Toast with Eggs",
-          ingredients: ["2 slices whole grain bread", "1 avocado", "2 eggs", "salt", "pepper"],
-          instructions: "Toast bread, mash avocado, fry eggs, assemble and season.",
-          prepTime: "10 minutes"
-        },
-        lunch: {
-          name: "Mediterranean Quinoa Bowl",
-          ingredients: ["1 cup quinoa", "cucumber", "tomatoes", "feta cheese", "olive oil"],
-          instructions: "Cook quinoa, chop vegetables, combine with feta and dressing.",
-          prepTime: "15 minutes"
-        },
-        dinner: {
-          name: "Grilled Chicken with Vegetables",
-          ingredients: ["chicken breast", "broccoli", "carrots", "olive oil", "herbs"],
-          instructions: "Season and grill chicken, steam vegetables, serve together.",
-          prepTime: "25 minutes"
-        }
-      },
-      tuesday: {
-        breakfast: {
-          name: "Greek Yogurt Parfait",
-          ingredients: ["Greek yogurt", "berries", "granola", "honey"],
-          instructions: "Layer yogurt, berries, and granola. Drizzle with honey.",
-          prepTime: "5 minutes"
-        },
-        lunch: {
-          name: "Turkey and Hummus Wrap",
-          ingredients: ["whole wheat tortilla", "turkey slices", "hummus", "lettuce", "tomato"],
-          instructions: "Spread hummus on tortilla, add turkey and vegetables, roll up.",
-          prepTime: "8 minutes"
-        },
-        dinner: {
-          name: "Salmon with Sweet Potato",
-          ingredients: ["salmon fillet", "sweet potato", "asparagus", "lemon", "herbs"],
-          instructions: "Bake salmon and sweet potato, steam asparagus, serve with lemon.",
-          prepTime: "30 minutes"
-        }
-      },
-      wednesday: {
-        breakfast: {
-          name: "Oatmeal with Fruits",
-          ingredients: ["oats", "milk", "banana", "berries", "nuts"],
-          instructions: "Cook oats with milk, top with fruits and nuts.",
-          prepTime: "8 minutes"
-        },
-        lunch: {
-          name: "Caprese Salad",
-          ingredients: ["mozzarella", "tomatoes", "basil", "balsamic vinegar", "olive oil"],
-          instructions: "Slice tomatoes and mozzarella, arrange with basil, drizzle with dressing.",
-          prepTime: "10 minutes"
-        },
-        dinner: {
-          name: "Vegetable Stir Fry",
-          ingredients: ["mixed vegetables", "tofu", "soy sauce", "ginger", "garlic", "rice"],
-          instructions: "Stir fry vegetables and tofu with seasonings, serve over rice.",
-          prepTime: "20 minutes"
-        }
-      },
-      thursday: {
-        breakfast: {
-          name: "Smoothie Bowl",
-          ingredients: ["frozen berries", "banana", "yogurt", "granola", "chia seeds"],
-          instructions: "Blend fruits with yogurt, pour into bowl, top with granola and seeds.",
-          prepTime: "7 minutes"
-        },
-        lunch: {
-          name: "Chicken Caesar Salad",
-          ingredients: ["romaine lettuce", "grilled chicken", "parmesan", "croutons", "caesar dressing"],
-          instructions: "Chop lettuce, add chicken and toppings, toss with dressing.",
-          prepTime: "12 minutes"
-        },
-        dinner: {
-          name: "Pasta Primavera",
-          ingredients: ["pasta", "zucchini", "bell peppers", "cherry tomatoes", "olive oil", "herbs"],
-          instructions: "Cook pasta, sauté vegetables, combine with herbs and oil.",
-          prepTime: "25 minutes"
-        }
-      },
-      friday: {
-        breakfast: {
-          name: "Breakfast Burrito",
-          ingredients: ["tortilla", "scrambled eggs", "cheese", "salsa", "avocado"],
-          instructions: "Scramble eggs, warm tortilla, add fillings and roll up.",
-          prepTime: "12 minutes"
-        },
-        lunch: {
-          name: "Asian Lettuce Wraps",
-          ingredients: ["lettuce leaves", "ground turkey", "water chestnuts", "soy sauce", "ginger"],
-          instructions: "Cook turkey with seasonings, serve in lettuce cups.",
-          prepTime: "15 minutes"
-        },
-        dinner: {
-          name: "Baked Cod with Quinoa",
-          ingredients: ["cod fillet", "quinoa", "green beans", "lemon", "herbs"],
-          instructions: "Bake cod with herbs, cook quinoa, steam green beans.",
-          prepTime: "28 minutes"
-        }
-      },
-      saturday: {
-        breakfast: {
-          name: "Pancakes with Berries",
-          ingredients: ["flour", "eggs", "milk", "berries", "maple syrup"],
-          instructions: "Make pancake batter, cook pancakes, serve with berries and syrup.",
-          prepTime: "20 minutes"
-        },
-        lunch: {
-          name: "Buddha Bowl",
-          ingredients: ["quinoa", "roasted vegetables", "chickpeas", "tahini", "greens"],
-          instructions: "Arrange quinoa, vegetables, and chickpeas in bowl, drizzle with tahini.",
-          prepTime: "18 minutes"
-        },
-        dinner: {
-          name: "Beef Stir Fry",
-          ingredients: ["beef strips", "broccoli", "snap peas", "soy sauce", "rice"],
-          instructions: "Stir fry beef and vegetables, season, serve over rice.",
-          prepTime: "22 minutes"
-        }
-      },
-      sunday: {
-        breakfast: {
-          name: "French Toast",
-          ingredients: ["bread", "eggs", "milk", "cinnamon", "berries"],
-          instructions: "Dip bread in egg mixture, cook until golden, serve with berries.",
-          prepTime: "15 minutes"
-        },
-        lunch: {
-          name: "Soup and Sandwich",
-          ingredients: ["tomato soup", "grilled cheese sandwich", "butter", "cheese"],
-          instructions: "Heat soup, make grilled cheese sandwich, serve together.",
-          prepTime: "12 minutes"
-        },
-        dinner: {
-          name: "Roast Chicken Dinner",
-          ingredients: ["whole chicken", "potatoes", "carrots", "herbs", "gravy"],
-          instructions: "Roast chicken with vegetables, make gravy, serve family style.",
-          prepTime: "90 minutes"
-        }
-      }
+  // Create a comprehensive prompt for AI
+  const prompt = `Generate a detailed 7-day meal plan with the following specifications:
+
+REGION: ${region}
+DIETARY RESTRICTIONS: ${dietaryRestrictions.join(', ') || 'None'}
+ALLERGIES: ${allergies.join(', ') || 'None'}
+CUISINE PREFERENCES: ${cuisinePreferences.join(', ') || 'Mixed'}
+BUDGET LEVEL: ${budget}
+SERVINGS: ${servings} people
+DISLIKES: ${dislikes.join(', ') || 'None'}
+
+REQUIREMENTS:
+1. Create culturally authentic ${region === 'India' ? 'Indian' : 'International'} meals
+2. Respect all dietary restrictions and allergies
+3. Include breakfast, lunch, and dinner for each day
+4. Provide detailed ingredients list for each meal
+5. Include cooking instructions and prep time
+6. Generate a categorized shopping list
+7. Provide nutritional summary
+
+${region === 'India' ? `
+INDIAN CUISINE FOCUS:
+- Use authentic Indian spices and cooking methods
+- Include regional variations based on cuisine preferences
+- Use appropriate grains (rice, wheat, millets)
+- Include dal, vegetables, and traditional preparations
+- Consider vegetarian options prominently
+` : `
+INTERNATIONAL CUISINE FOCUS:
+- Use global ingredients and cooking methods
+- Include variety from selected cuisine preferences
+- Balance proteins, carbs, and vegetables
+- Include both vegetarian and non-vegetarian options
+`}
+
+DIETARY SUBSTITUTIONS:
+${dietaryRestrictions.includes('vegan') ? '- Replace all animal products with plant-based alternatives' : ''}
+${dietaryRestrictions.includes('keto') ? '- Use low-carb alternatives (cauliflower rice, zucchini noodles)' : ''}
+${dietaryRestrictions.includes('gluten-free') ? '- Use gluten-free grains and alternatives' : ''}
+${dietaryRestrictions.includes('dairy-free') ? '- Use coconut milk, almond milk, and dairy alternatives' : ''}
+
+FORMAT: Return ONLY valid JSON in this exact structure:
+{
+  "weekPlan": {
+    "monday": {
+      "breakfast": {"name": "", "ingredients": [], "instructions": "", "prepTime": ""},
+      "lunch": {"name": "", "ingredients": [], "instructions": "", "prepTime": ""},
+      "dinner": {"name": "", "ingredients": [], "instructions": "", "prepTime": ""}
     },
-    shoppingList: {
-      produce: ["avocado", "cucumber", "tomatoes", "broccoli", "carrots", "berries", "banana", "lettuce", "asparagus", "sweet potato"],
-      proteins: ["eggs", "chicken breast", "turkey slices", "salmon fillet", "tofu", "ground turkey", "cod fillet", "beef strips"],
-      grains: ["whole grain bread", "quinoa", "oats", "pasta", "rice", "flour"],
-      dairy: ["Greek yogurt", "feta cheese", "mozzarella", "milk", "cheese", "butter"],
-      pantry: ["olive oil", "salt", "pepper", "herbs", "honey", "soy sauce", "balsamic vinegar", "tahini", "maple syrup"]
-    },
-    nutritionalSummary: {
-      averageCaloriesPerDay: "1800-2000 calories",
-      balanceNotes: "Well-balanced meals with adequate protein, healthy fats, and complex carbohydrates. Includes variety of fruits and vegetables for essential nutrients."
+    "tuesday": { /* same structure */ },
+    "wednesday": { /* same structure */ },
+    "thursday": { /* same structure */ },
+    "friday": { /* same structure */ },
+    "saturday": { /* same structure */ },
+    "sunday": { /* same structure */ }
+  },
+  "shoppingList": {
+    "grains": [],
+    "vegetables": [],
+    "proteins": [],
+    "dairy": [],
+    "spices": [],
+    "produce": [],
+    "pantry": []
+  },
+  "nutritionalSummary": {
+    "averageCaloriesPerDay": "",
+    "balanceNotes": ""
+  }
+}`;
+
+  try {
+    console.log('🤖 Generating AI meal plan...');
+    
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: `You are a professional nutritionist and meal planning expert specializing in ${region === 'India' ? 'Indian' : 'international'} cuisine. Generate practical, healthy, and culturally authentic meal plans that respect dietary restrictions and preferences. Always respond with valid JSON only.`
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      max_tokens: 3000,
+      temperature: 0.7
+    });
+
+    const response = completion.choices[0].message.content;
+    console.log('✅ AI meal plan generated successfully');
+    
+    // Parse and validate JSON response
+    const mealPlan = JSON.parse(response);
+    
+    // Validate required structure
+    if (!mealPlan.weekPlan || !mealPlan.shoppingList || !mealPlan.nutritionalSummary) {
+      throw new Error('Invalid meal plan structure from AI');
     }
-  };
+    
+    return mealPlan;
+    
+  } catch (error) {
+    console.error('❌ Error generating AI meal plan:', error);
+    
+    // Fallback to a basic meal plan if AI fails
+    console.log('🔄 Using fallback meal plan...');
+    return generateFallbackMealPlan(userPreferences, region);
+  }
+};
 
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-
-  console.log('Mock: Generated meal plan with preferences:', userPreferences);
-  return mockMealPlan;
+// Fallback meal plan generator
+const generateFallbackMealPlan = (userPreferences, region) => {
+  const { dietaryRestrictions = [], cuisinePreferences = [], servings = 2 } = userPreferences;
+  const isVegetarian = dietaryRestrictions.includes('vegetarian') || dietaryRestrictions.includes('vegan');
+  const isIndian = region === 'India';
+  
+  if (isIndian) {
+    return {
+      weekPlan: {
+        monday: {
+          breakfast: { name: "Idli with Sambar", ingredients: ["rice", "urad dal", "sambar mix"], instructions: "Steam idli, prepare sambar", prepTime: "20 minutes" },
+          lunch: { name: isVegetarian ? "Dal Rice" : "Chicken Curry with Rice", ingredients: ["rice", "dal", "spices"], instructions: "Cook rice and dal separately", prepTime: "30 minutes" },
+          dinner: { name: "Roti with Vegetables", ingredients: ["wheat flour", "mixed vegetables"], instructions: "Make roti, cook vegetables", prepTime: "25 minutes" }
+        },
+        tuesday: {
+          breakfast: { name: "Upma", ingredients: ["semolina", "vegetables"], instructions: "Roast semolina, add vegetables", prepTime: "15 minutes" },
+          lunch: { name: "Rajma Rice", ingredients: ["rajma", "rice", "spices"], instructions: "Cook rajma curry with rice", prepTime: "40 minutes" },
+          dinner: { name: "Chapati with Dal", ingredients: ["wheat flour", "dal"], instructions: "Make chapati, prepare dal", prepTime: "30 minutes" }
+        },
+        wednesday: {
+          breakfast: { name: "Dosa", ingredients: ["rice", "urad dal"], instructions: "Make dosa batter, cook dosa", prepTime: "20 minutes" },
+          lunch: { name: "Vegetable Biryani", ingredients: ["rice", "vegetables", "spices"], instructions: "Layer rice and vegetables", prepTime: "45 minutes" },
+          dinner: { name: "Khichdi", ingredients: ["rice", "dal", "vegetables"], instructions: "Cook everything together", prepTime: "25 minutes" }
+        }
+      },
+      shoppingList: {
+        grains: ["rice", "wheat flour", "semolina", "urad dal"],
+        vegetables: ["onions", "tomatoes", "potatoes", "mixed vegetables"],
+        proteins: isVegetarian ? ["dal varieties", "paneer"] : ["chicken", "dal varieties"],
+        dairy: ["yogurt", "milk"],
+        spices: ["turmeric", "cumin", "coriander", "garam masala"],
+        produce: ["ginger", "garlic", "green chilies"],
+        pantry: ["oil", "salt", "sugar"]
+      },
+      nutritionalSummary: {
+        averageCaloriesPerDay: "1800-2000 calories",
+        balanceNotes: `Balanced Indian meals for ${servings} people with adequate protein and vegetables.`
+      }
+    };
+  } else {
+    return {
+      weekPlan: {
+        monday: {
+          breakfast: { name: "Oatmeal with Berries", ingredients: ["oats", "berries", "milk"], instructions: "Cook oats, add berries", prepTime: "10 minutes" },
+          lunch: { name: isVegetarian ? "Quinoa Bowl" : "Grilled Chicken Salad", ingredients: ["quinoa", "vegetables"], instructions: "Cook quinoa, add vegetables", prepTime: "15 minutes" },
+          dinner: { name: isVegetarian ? "Pasta Primavera" : "Salmon with Vegetables", ingredients: ["pasta", "vegetables"], instructions: "Cook pasta, sauté vegetables", prepTime: "25 minutes" }
+        },
+        tuesday: {
+          breakfast: { name: "Greek Yogurt Parfait", ingredients: ["yogurt", "granola", "fruits"], instructions: "Layer ingredients", prepTime: "5 minutes" },
+          lunch: { name: "Veggie Wrap", ingredients: ["tortilla", "vegetables", "hummus"], instructions: "Wrap ingredients in tortilla", prepTime: "10 minutes" },
+          dinner: { name: "Stir Fry", ingredients: ["vegetables", "rice"], instructions: "Stir fry vegetables, serve with rice", prepTime: "20 minutes" }
+        },
+        wednesday: {
+          breakfast: { name: "Smoothie Bowl", ingredients: ["fruits", "yogurt", "granola"], instructions: "Blend fruits, top with granola", prepTime: "8 minutes" },
+          lunch: { name: "Mediterranean Bowl", ingredients: ["quinoa", "vegetables", "feta"], instructions: "Combine ingredients", prepTime: "12 minutes" },
+          dinner: { name: "Tacos", ingredients: ["tortillas", "beans", "vegetables"], instructions: "Assemble tacos", prepTime: "15 minutes" }
+        }
+      },
+      shoppingList: {
+        grains: ["oats", "quinoa", "pasta", "rice", "tortillas"],
+        vegetables: ["mixed vegetables", "lettuce", "tomatoes"],
+        proteins: isVegetarian ? ["beans", "tofu", "quinoa"] : ["chicken", "salmon", "beans"],
+        dairy: ["yogurt", "milk", "cheese"],
+        spices: ["herbs", "spices"],
+        produce: ["berries", "fruits"],
+        pantry: ["olive oil", "salt", "pepper"]
+      },
+      nutritionalSummary: {
+        averageCaloriesPerDay: "1800-2000 calories",
+        balanceNotes: `Balanced international meals for ${servings} people with variety and nutrition.`
+      }
+    };
+  }
 };
 
 export const getRecipeSuggestions = async (ingredients, dietaryRestrictions = []) => {
-  // Mock recipe suggestions
-  const mockRecipes = [
-    {
-      name: "Quick Veggie Scramble",
-      ingredients: ingredients.slice(0, 4),
-      instructions: "Heat oil in pan, add vegetables, scramble with eggs, season to taste.",
-      prepTime: "10 minutes",
-      difficulty: "easy"
-    },
-    {
-      name: "Simple Stir Fry",
-      ingredients: ingredients.slice(0, 5),
-      instructions: "Heat oil, add ingredients in order of cooking time, stir fry until tender.",
-      prepTime: "15 minutes",
-      difficulty: "easy"
-    },
-    {
-      name: "Fresh Salad Bowl",
-      ingredients: ingredients.slice(0, 6),
-      instructions: "Chop all ingredients, combine in bowl, dress with oil and vinegar.",
-      prepTime: "8 minutes",
-      difficulty: "easy"
-    }
-  ];
+  const prompt = `Suggest 3 quick and easy recipes using these ingredients: ${ingredients.join(', ')}
+  
+Dietary restrictions: ${dietaryRestrictions.join(', ') || 'None'}
 
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
+Requirements:
+- Use only the provided ingredients or common pantry items
+- Respect dietary restrictions
+- Provide simple cooking instructions
+- Include prep time and difficulty level
 
-  console.log('Mock: Generated recipe suggestions for ingredients:', ingredients);
-  return mockRecipes;
+FORMAT: Return ONLY valid JSON array:
+[
+  {
+    "name": "",
+    "ingredients": [],
+    "instructions": "",
+    "prepTime": "",
+    "difficulty": "easy/medium/hard"
+  }
+]`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful cooking assistant. Provide simple, practical recipes using available ingredients. Always respond with valid JSON only."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      max_tokens: 1000,
+      temperature: 0.7
+    });
+
+    const response = completion.choices[0].message.content;
+    return JSON.parse(response);
+    
+  } catch (error) {
+    console.error('Error getting recipe suggestions:', error);
+    
+    // Fallback recipes
+    return [
+      {
+        name: "Simple Stir Fry",
+        ingredients: ingredients.slice(0, 4),
+        instructions: "Heat oil, add ingredients, stir fry for 5-7 minutes, season to taste.",
+        prepTime: "10 minutes",
+        difficulty: "easy"
+      },
+      {
+        name: "Quick Salad",
+        ingredients: ingredients.slice(0, 3),
+        instructions: "Chop ingredients, mix together, add dressing of choice.",
+        prepTime: "5 minutes",
+        difficulty: "easy"
+      }
+    ];
+  }
 };

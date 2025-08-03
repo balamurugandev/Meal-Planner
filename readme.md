@@ -1,242 +1,244 @@
-# Yummurai
+# 🍽️ Yummurai - Smart Meal Planning Made Simple
 
-A smart, AI-powered meal planning application built for busy professionals and families. Generate personalized weekly meal plans based on dietary preferences, budget constraints, and household size.
+A modern, database-integrated meal planning application built with React, Vite, and Supabase. Yummurai helps busy professionals and families create personalized weekly meal plans based on their dietary preferences, budget, and regional cuisine preferences.
 
-## 🚀 Features
+## 🌟 Features
 
-- **AI-Powered Meal Planning**: Generate personalized weekly meal plans using OpenAI
-- **Smart Preferences**: Dietary restrictions, allergies, cuisine preferences, and budget levels
-- **Automated Shopping Lists**: Organized by category for efficient grocery shopping
-- **Freemium Model**: 3 free meal plans per week, unlimited with Premium ($4.99/month)
-- **Mobile-First Design**: Responsive design optimized for mobile devices
-- **User Authentication**: Secure authentication with Supabase Auth
-- **Real-time Database**: PostgreSQL database with Supabase
+### 🔐 **User Authentication & Profiles**
+- Secure email/password authentication via Supabase
+- Persistent user profiles with dietary preferences
+- Usage tracking and weekly limits (3 free plans/week)
 
-## 🛠️ Tech Stack
+### 🍳 **Smart Meal Planning**
+- Personalized weekly meal plans with local generation algorithm
+- Regional cuisine support (Indian & American)
+- Dietary restriction awareness (vegetarian, vegan, gluten-free, keto, etc.)
+- Budget-conscious meal suggestions
+- Automatic shopping list generation
 
-- **Frontend**: React.js with Tailwind CSS
-- **Backend**: Supabase (PostgreSQL + Auth + Real-time)
-- **AI Integration**: OpenAI GPT-3.5-turbo
-- **Routing**: React Router DOM
-- **Icons**: Lucide React
-- **Hosting**: Vercel (recommended)
+### 💾 **Database Integration**
+- Real PostgreSQL database via Supabase
+- Persistent meal plan storage and history
+- Row-level security for data protection
+- Automatic usage tracking and limits
 
-## 📋 Prerequisites
-
-- Node.js 16+ and npm
-- Supabase account (free tier)
-- OpenAI API account (pay-per-use)
-- Git
+### 🎨 **Modern UI/UX**
+- Mobile-first responsive design
+- Dark/light theme toggle
+- Region switching (India/USA)
+- Clean, intuitive interface
 
 ## 🚀 Quick Start
 
-### 1. Clone the Repository
+### Prerequisites
 
+- Node.js 16+ and npm
+- Supabase account (free tier available)
+
+### Installation
+
+1. **Clone the repository:**
 ```bash
-git clone <your-repo-url>
-cd ai-meal-planner
+git clone https://github.com/yourusername/yummurai.git
+cd yummurai
 ```
 
-### 2. Install Dependencies
-
+2. **Install dependencies:**
 ```bash
 npm install
 ```
 
-### 3. Set Up Environment Variables
+3. **Set up Supabase database:**
+   - Create a new project at [supabase.com](https://supabase.com)
+   - Copy your Project URL and anon key
+   - Run the SQL schema from `DATABASE_SETUP.md`
 
-Copy `.env.example` to `.env.local`:
-
+4. **Configure environment variables:**
 ```bash
 cp .env.example .env.local
 ```
-
-Fill in your API keys:
-
+Edit `.env.local` with your Supabase credentials:
 ```env
-REACT_APP_SUPABASE_URL=your_supabase_project_url
-REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
-REACT_APP_OPENAI_API_KEY=your_openai_api_key
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
 ```
 
-### 4. Set Up Supabase Database
-
-Run these SQL commands in your Supabase SQL editor:
-
-```sql
--- Create user profiles table
-CREATE TABLE user_profiles (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  dietary_restrictions TEXT[] DEFAULT '{}',
-  allergies TEXT[] DEFAULT '{}',
-  cuisine_preferences TEXT[] DEFAULT '{}',
-  budget_level TEXT DEFAULT 'medium',
-  household_size INTEGER DEFAULT 2,
-  meal_plans_used_this_week INTEGER DEFAULT 0,
-  is_premium BOOLEAN DEFAULT FALSE,
-  dislikes TEXT[] DEFAULT '{}',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create meal plans table
-CREATE TABLE meal_plans (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  meal_plan JSONB NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Enable Row Level Security
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE meal_plans ENABLE ROW LEVEL SECURITY;
-
--- Create policies for user_profiles
-CREATE POLICY "Users can view own profile" ON user_profiles
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own profile" ON user_profiles
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own profile" ON user_profiles
-  FOR UPDATE USING (auth.uid() = user_id);
-
--- Create policies for meal_plans
-CREATE POLICY "Users can view own meal plans" ON meal_plans
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own meal plans" ON meal_plans
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
--- Create function to update updated_at timestamp
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
-
--- Create trigger for user_profiles
-CREATE TRIGGER update_user_profiles_updated_at
-    BEFORE UPDATE ON user_profiles
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
-```
-
-### 5. Start Development Server
-
+5. **Start the development server:**
 ```bash
-npm start
+npm run dev
 ```
 
-The app will open at `http://localhost:3000`.
+6. **Open your browser:** Navigate to `http://localhost:3000`
 
-## 🏗️ Project Structure
+## 🗄️ Database Schema
+
+The application uses the following database tables:
+
+### `user_profiles`
+- User preferences and dietary restrictions
+- Household size and budget level
+- Weekly usage tracking
+- Premium status
+
+### `meal_plans`
+- Generated meal plans with full week data
+- Associated user preferences
+- Creation timestamps for history
+
+### Authentication
+- Handled by Supabase Auth
+- Email/password authentication
+- Secure session management
+
+## 💰 Cost Structure
+
+### **Development/MVP (FREE)**
+- **Supabase**: $0/month (up to 50,000 users, 500MB database)
+- **Vercel Hosting**: $0/month (hobby tier)
+- **Total**: **$0/month** 🎯
+
+### **Production Scale (1000+ users)**
+- **Supabase Pro**: $25/month
+- **Vercel Pro**: $20/month  
+- **Total**: **$45/month**
+
+## 📱 Usage
+
+### **Getting Started**
+1. **Sign Up**: Create an account with email/password
+2. **Set Preferences**: Choose dietary restrictions, cuisine preferences, budget level
+3. **Generate Plans**: Create personalized weekly meal plans
+4. **View History**: Access previously generated meal plans
+5. **Shopping Lists**: Get automatic grocery lists for your meals
+
+### **Free Tier Limits**
+- 3 meal plans per week
+- Basic dietary preferences
+- Shopping list generation
+- Mobile-responsive design
+
+## 🌍 Regional Support
+
+### 🇮🇳 **India**
+- **Cuisines**: North Indian, South Indian, Gujarati, Punjabi, Bengali
+- **Ingredients**: Rice, dal, roti, traditional spices
+- **Budget**: ₹500-2000+/week ranges
+- **Vegetarian-first**: Extensive vegetarian options
+
+### 🇺🇸 **USA**
+- **Cuisines**: American, Italian, Mexican, Asian, Mediterranean
+- **Ingredients**: Common Western ingredients
+- **Budget**: $20-70+/week ranges
+- **Diverse Options**: International cuisine variety
+
+## 🛠️ Tech Stack
+
+### **Frontend**
+- **React 18** - Modern React with hooks
+- **Vite** - Fast build tool and dev server
+- **Tailwind CSS** - Utility-first CSS framework
+- **React Router** - Client-side routing
+- **Lucide React** - Beautiful icons
+
+### **Backend & Database**
+- **Supabase** - PostgreSQL database with authentication
+- **Row Level Security** - Data protection policies
+- **Real-time subscriptions** - Live data updates
+
+### **Deployment**
+- **Vercel** - Frontend hosting (recommended)
+- **Supabase** - Database and authentication hosting
+
+## 📦 Project Structure
 
 ```
 src/
 ├── components/          # Reusable UI components
-│   ├── Layout.js       # Main layout with navigation
-│   └── ProtectedRoute.js # Route protection
-├── contexts/           # React Context providers
-│   ├── AuthContext.js  # Authentication state
-│   └── UserContext.js  # User profile and preferences
-├── lib/               # External service integrations
-│   ├── supabase.js    # Supabase client and helpers
-│   └── openai.js      # OpenAI API integration
-├── pages/             # Main application pages
-│   ├── Home.js        # Landing page
-│   ├── Login.js       # Authentication
-│   ├── Dashboard.js   # User dashboard
-│   ├── MealPlanner.js # Meal planning interface
-│   └── Profile.js     # User preferences
-├── App.js             # Main app component
-├── index.js           # React entry point
-└── index.css          # Global styles with Tailwind
+│   ├── Layout.jsx      # Main app layout with navigation
+│   └── ProtectedRoute.jsx # Authentication guard
+├── contexts/           # React context providers
+│   ├── AuthContext.jsx # Authentication state management
+│   ├── UserContext.jsx # User profile and data management
+│   └── SettingsContext.jsx # App settings (theme, region)
+├── lib/                # External service integrations
+│   └── supabase.js     # Supabase client and database functions
+├── pages/              # Main application pages
+│   ├── Home.jsx        # Landing page
+│   ├── Login.jsx       # Authentication page
+│   ├── Dashboard.jsx   # User dashboard
+│   ├── MealPlanner.jsx # Meal plan generation
+│   └── Profile.jsx     # User profile management
+└── index.css           # Global styles and Tailwind imports
 ```
 
-## 🔧 Configuration
+## 🔧 Development
 
-### Supabase Setup
+### **Available Scripts**
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+```
 
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Go to Settings > API to get your URL and anon key
-3. Run the database schema SQL commands above
-4. Enable email authentication in Authentication > Settings
+### **Environment Variables**
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-### OpenAI Setup
+## 🚀 Deployment
 
-1. Create an account at [platform.openai.com](https://platform.openai.com)
-2. Generate an API key in the API keys section
-3. Add billing information (pay-per-use, very cost-effective for MVP)
+### **Vercel (Recommended)**
+1. Connect your GitHub repository to Vercel
+2. Add environment variables in Vercel dashboard
+3. Deploy automatically on every push
 
-### Deployment (Vercel)
+### **Manual Deployment**
+```bash
+npm run build
+# Upload dist/ folder to your hosting provider
+```
 
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Add environment variables in Vercel dashboard
-4. Deploy automatically on every push
+## 🔒 Security Features
 
-## 💰 Cost Breakdown
+- **Row Level Security (RLS)** - Users can only access their own data
+- **Environment Variables** - Sensitive keys stored securely
+- **Authentication** - Secure email/password via Supabase Auth
+- **Data Validation** - Input validation and sanitization
 
-- **Supabase**: Free tier (up to 50,000 monthly active users)
-- **OpenAI API**: ~$0.002 per meal plan generation (very affordable)
-- **Vercel Hosting**: Free tier (perfect for MVP)
-- **Domain** (optional): ~$10-15/year
+## 🧪 Testing the Database Integration
 
-**Total monthly cost for MVP**: Under $10 for moderate usage
-
-## 🎯 MVP Features Implemented
-
-✅ User authentication and profiles  
-✅ AI meal plan generation  
-✅ Dietary preferences and restrictions  
-✅ Shopping list generation  
-✅ Freemium model (3 free plans/week)  
-✅ Mobile-responsive design  
-✅ User dashboard and meal history  
-
-## 🚀 Future Enhancements
-
-- Recipe rating and favorites
-- Meal plan sharing
-- Nutritional tracking
-- Integration with grocery delivery services
-- Recipe photo generation
-- Meal prep scheduling
-- Family meal coordination
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **OpenAI API errors**: Check your API key and billing setup
-2. **Supabase connection issues**: Verify URL and anon key
-3. **Authentication problems**: Check RLS policies are set up correctly
-
-### Development Tips
-
-- Use browser dev tools to debug API calls
-- Check Supabase logs for database issues
-- Monitor OpenAI usage in their dashboard
-
-## 📝 License
-
-This project is licensed under the MIT License.
+1. **Sign up** with a test email
+2. **Check Supabase Dashboard** → Authentication → Users
+3. **Complete profile setup** 
+4. **Check Supabase Dashboard** → Table Editor → user_profiles
+5. **Generate a meal plan**
+6. **Check Supabase Dashboard** → Table Editor → meal_plans
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## 📞 Support
+## 📄 License
 
-For questions or issues, please open a GitHub issue or contact [your-email].
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **Supabase** - For the excellent database and authentication platform
+- **Vercel** - For seamless deployment and hosting
+- **Tailwind CSS** - For the utility-first CSS framework
+- **Lucide** - For beautiful, consistent icons
+- Regional cuisine data curated for authentic meal planning
 
 ---
 
-Built with ❤️ for busy people who want to eat well!
+**🎯 Status**: Production-ready with database integration  
+**💰 Cost**: $0/month for MVP, scales affordably  
+**🚀 Ready for**: User testing, feature enhancements, scaling  
+
+Made with ❤️ for better meal planning
