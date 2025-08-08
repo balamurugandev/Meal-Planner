@@ -79,16 +79,43 @@ export const updateUserProfile = async (userId, updates) => {
 };
 
 export const incrementMealPlanUsage = async (userId) => {
-  const { data, error } = await supabase
-    .from('user_profiles')
-    .update({ 
-      meal_plans_used_this_week: supabase.raw('meal_plans_used_this_week + 1')
-    })
-    .eq('user_id', userId)
-    .select()
-    .single();
-  
-  return { data, error };
+  try {
+    // First get the current usage count
+    const { data: currentProfile, error: fetchError } = await supabase
+      .from('user_profiles')
+      .select('meal_plans_used_this_week')
+      .eq('user_id', userId)
+      .single();
+    
+    if (fetchError) {
+      console.error('Error fetching current usage:', fetchError);
+      return { data: null, error: fetchError };
+    }
+    
+    const newCount = (currentProfile.meal_plans_used_this_week || 0) + 1;
+    
+    // Update with the new count
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .update({ 
+        meal_plans_used_this_week: newCount,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', userId)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating usage count:', error);
+      return { data: null, error };
+    }
+    
+    console.log('✅ Usage count updated to:', newCount);
+    return { data, error: null };
+  } catch (error) {
+    console.error('Exception in incrementMealPlanUsage:', error);
+    return { data: null, error };
+  }
 };
 
 // Meal plan functions

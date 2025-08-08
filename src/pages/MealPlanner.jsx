@@ -62,10 +62,10 @@ const MealPlanner = () => {
           ? prev[category].filter(item => item !== value)
           : [...prev[category], value]
       };
-      
+
       // Save to database when preferences change
       savePreferencesToDatabase(newPreferences);
-      
+
       return newPreferences;
     });
   };
@@ -85,7 +85,7 @@ const MealPlanner = () => {
       };
 
       const { error } = await updateUserProfile(updates);
-      
+
       if (error) {
         console.error('❌ Error saving preferences:', error);
       } else {
@@ -100,7 +100,7 @@ const MealPlanner = () => {
     const isIndian = region === 'India';
     const selectedCuisines = preferences.cuisinePreferences;
     const dietaryRestrictions = preferences.dietaryRestrictions;
-    
+
     // Parse dietary restrictions
     const isVegetarian = dietaryRestrictions.includes('vegetarian');
     const isVegan = dietaryRestrictions.includes('vegan');
@@ -109,7 +109,7 @@ const MealPlanner = () => {
     const isKeto = dietaryRestrictions.includes('keto');
     const isPaleo = dietaryRestrictions.includes('paleo');
     const isLowCarb = dietaryRestrictions.includes('low-carb');
-    
+
     // Parse cuisines
     const isSouthIndian = selectedCuisines.includes('south-indian');
     const isNorthIndian = selectedCuisines.includes('north-indian');
@@ -119,7 +119,7 @@ const MealPlanner = () => {
     const isItalian = selectedCuisines.includes('italian');
     const isMexican = selectedCuisines.includes('mexican');
     const isAsian = selectedCuisines.includes('asian') || selectedCuisines.includes('chinese') || selectedCuisines.includes('thai') || selectedCuisines.includes('japanese');
-    
+
     // COMPREHENSIVE SMART SUBSTITUTION SYSTEM
     const getProtein = (vegOption, nonVegOption, ketoVegOption = null, ketoNonVegOption = null) => {
       if (isVegan) {
@@ -135,26 +135,26 @@ const MealPlanner = () => {
       if (isKeto && ketoNonVegOption) return ketoNonVegOption;
       return nonVegOption;
     };
-    
+
     const getGrain = (defaultGrain, glutenFreeAlt = 'rice', lowCarbAlt = 'cauliflower rice') => {
       if (isKeto || isLowCarb) return lowCarbAlt;
       if (isGlutenFree) return glutenFreeAlt;
       if (isPaleo) return 'sweet potato';
       return defaultGrain;
     };
-    
+
     const getDairy = (defaultDairy, altOption = 'coconut milk') => {
       if (isVegan || isDairyFree) return altOption;
       return defaultDairy;
     };
-    
+
     const getBread = (defaultBread) => {
       if (isKeto || isLowCarb) return 'lettuce wraps';
       if (isGlutenFree) return 'rice bread';
       if (isPaleo) return 'sweet potato slices';
       return defaultBread;
     };
-    
+
     const getSpice = (defaultSpice, paleoAlt = 'herbs') => {
       if (isPaleo) return paleoAlt;
       return defaultSpice;
@@ -162,7 +162,7 @@ const MealPlanner = () => {
 
     let weekPlan = {};
     let cuisineType = '';
-    
+
     // Generate meal plans based on region and cuisine
     if (isIndian) {
       // Create meal plan pools for different cuisines
@@ -299,36 +299,26 @@ const MealPlanner = () => {
             }
           };
         } else {
-            breakfast: { name: isKeto ? "Dhokla with Chutney" : "Fafda with Jalebi", prepTime: "15 minutes" },
-            lunch: { name: "Undhiyu with Puri", prepTime: "45 minutes" },
-            dinner: { name: "Rotli with Shaak", prepTime: "25 minutes" }
-          },
-          wednesday: {
-            breakfast: { name: "Handvo with Chutney", prepTime: "25 minutes" },
-            lunch: { name: "Dal Dhokli", prepTime: "40 minutes" },
-            dinner: { name: isKeto ? "Vegetable Curry" : "Kheer with Puri", prepTime: "30 minutes" }
-          }
-        };
-      } else {
-        // Default Indian
-        cuisineType = 'Mixed Indian';
-        weekPlan = {
-          monday: {
-            breakfast: { name: "Idli with Sambar", prepTime: "15 minutes" },
-            lunch: { name: getProtein("Dal Rice with Sabzi", "Chicken Curry with " + getGrain("Rice")), prepTime: "30 minutes" },
-            dinner: { name: getGrain("Roti") + " with Dal and Vegetables", prepTime: "25 minutes" }
-          },
-          tuesday: {
-            breakfast: { name: "Upma with Coconut Chutney", prepTime: "12 minutes" },
-            lunch: { name: getProtein("Rajma " + getGrain("Rice"), "Fish Curry with " + getGrain("Rice")), prepTime: "35 minutes" },
-            dinner: { name: "Chapati with Paneer Curry", prepTime: "30 minutes" }
-          },
-          wednesday: {
-            breakfast: { name: "Dosa with Sambar", prepTime: "20 minutes" },
-            lunch: { name: getProtein("Chole with " + getGrain("Rice"), "Mutton Curry with " + getGrain("Rice")), prepTime: "40 minutes" },
-            dinner: { name: "Khichdi with " + getDairy("Yogurt"), prepTime: "20 minutes" }
-          }
-        };
+          // Default Indian when no specific cuisine selected
+          cuisineType = 'Mixed Indian';
+          weekPlan = {
+            monday: {
+              breakfast: { name: "Idli with Sambar", prepTime: "15 minutes" },
+              lunch: { name: getProtein("Dal Rice with Sabzi", "Chicken Curry with " + getGrain("Rice")), prepTime: "30 minutes" },
+              dinner: { name: getGrain("Roti") + " with Dal and Vegetables", prepTime: "25 minutes" }
+            },
+            tuesday: {
+              breakfast: { name: "Upma with Coconut Chutney", prepTime: "12 minutes" },
+              lunch: { name: getProtein("Rajma " + getGrain("Rice"), "Fish Curry with " + getGrain("Rice")), prepTime: "35 minutes" },
+              dinner: { name: "Chapati with Paneer Curry", prepTime: "30 minutes" }
+            },
+            wednesday: {
+              breakfast: { name: "Dosa with Sambar", prepTime: "20 minutes" },
+              lunch: { name: getProtein("Chole with " + getGrain("Rice"), "Mutton Curry with " + getGrain("Rice")), prepTime: "40 minutes" },
+              dinner: { name: "Khichdi with " + getDairy("Yogurt"), prepTime: "20 minutes" }
+            }
+          };
+        }
       }
     } else {
       // International cuisines
@@ -443,24 +433,24 @@ const MealPlanner = () => {
         pantry: [],
         oils: []
       };
-      
+
       if (isIndian) {
         // Indian-specific ingredients
-        baseList.grains = isKeto ? 
-          ['cauliflower rice', 'almond flour', 'coconut flour'] : 
-          isGlutenFree ? 
-            ['rice', 'rice flour', 'quinoa', 'millet'] : 
+        baseList.grains = isKeto ?
+          ['cauliflower rice', 'almond flour', 'coconut flour'] :
+          isGlutenFree ?
+            ['rice', 'rice flour', 'quinoa', 'millet'] :
             ['rice', 'wheat flour', 'dal (lentils)', 'semolina', 'besan'];
-            
+
         baseList.vegetables = [
-          'onions', 'tomatoes', 'green chilies', 'ginger', 'garlic', 
+          'onions', 'tomatoes', 'green chilies', 'ginger', 'garlic',
           'curry leaves', 'coriander leaves', 'mint leaves',
           ...(isSouthIndian ? ['coconut', 'drumsticks', 'okra'] : []),
           ...(isNorthIndian ? ['spinach', 'cauliflower', 'peas'] : []),
           ...(isPunjabi ? ['mustard greens', 'radish', 'turnip'] : []),
           ...(isGujarati ? ['bottle gourd', 'bitter gourd', 'fenugreek leaves'] : [])
         ];
-        
+
         baseList.spices = [
           'turmeric', 'cumin seeds', 'coriander seeds', 'mustard seeds',
           'fenugreek seeds', 'cardamom', 'cinnamon', 'cloves',
@@ -469,60 +459,60 @@ const MealPlanner = () => {
           ...(isNorthIndian ? ['kasoori methi', 'amchur', 'chaat masala'] : []),
           ...(isPunjabi ? ['black cardamom', 'bay leaves', 'fennel seeds'] : [])
         ];
-        
-        baseList.proteins = isVegetarian ? 
+
+        baseList.proteins = isVegetarian ?
           ['paneer', 'tofu', 'dal varieties', 'chickpeas', 'rajma', 'chana dal'] :
           ['chicken', 'fish', 'mutton', 'eggs', 'paneer', 'dal varieties'];
-          
-        baseList.dairy = isVegan || isDairyFree ? 
+
+        baseList.dairy = isVegan || isDairyFree ?
           ['coconut milk', 'coconut oil', 'cashew cream'] :
           ['yogurt', 'milk', 'ghee', 'butter', 'cream'];
-          
+
         baseList.oils = ['mustard oil', 'coconut oil', 'sesame oil'];
-        
+
       } else {
         // International ingredients
-        baseList.produce = isKeto ? 
+        baseList.produce = isKeto ?
           ['avocado', 'leafy greens', 'broccoli', 'cauliflower', 'zucchini', 'bell peppers', 'asparagus'] :
           ['berries', 'bananas', 'apples', 'lettuce', 'tomatoes', 'cucumbers', 'carrots'];
-          
-        baseList.grains = isKeto ? 
+
+        baseList.grains = isKeto ?
           ['cauliflower rice', 'zucchini noodles', 'shirataki noodles'] :
-          isGlutenFree ? 
+          isGlutenFree ?
             ['rice', 'quinoa', 'gluten-free oats', 'rice pasta'] :
             ['oats', 'bread', 'pasta', 'rice', 'quinoa'];
-            
+
         baseList.proteins = isVegetarian ?
           (isKeto ? ['tofu', 'tempeh', 'nuts', 'seeds', 'cheese'] : ['tofu', 'beans', 'lentils', 'quinoa', 'nuts']) :
           (isKeto ? ['chicken', 'salmon', 'beef', 'eggs', 'cheese'] : ['chicken breast', 'salmon', 'turkey', 'beef', 'eggs']);
-          
+
         baseList.dairy = isVegan || isDairyFree ?
           (isKeto ? ['coconut cream', 'almond milk', 'nutritional yeast'] : ['almond milk', 'coconut yogurt', 'cashew cheese']) :
           (isKeto ? ['heavy cream', 'cheese', 'butter'] : ['Greek yogurt', 'milk', 'cheese']);
-          
-        baseList.spices = isMediterranean ? 
+
+        baseList.spices = isMediterranean ?
           ['oregano', 'basil', 'thyme', 'rosemary', 'olive oil', 'lemon'] :
           isItalian ?
             ['basil', 'oregano', 'garlic', 'parmesan', 'olive oil'] :
             isMexican ?
               ['cumin', 'chili powder', 'paprika', 'lime', 'cilantro'] :
               ['black pepper', 'salt', 'garlic powder', 'herbs'];
-              
+
         baseList.oils = ['olive oil', 'avocado oil', 'coconut oil'];
       }
-      
+
       // Add paleo-specific items
       if (isPaleo) {
         baseList.pantry = ['coconut flour', 'almond flour', 'honey', 'coconut aminos'];
         baseList.proteins = baseList.proteins.filter(p => !p.includes('bean') && !p.includes('lentil'));
       }
-      
+
       // Add keto-specific items
       if (isKeto) {
         baseList.pantry = [...(baseList.pantry || []), 'MCT oil', 'stevia', 'erythritol', 'psyllium husk'];
         baseList.dairy = [...baseList.dairy, 'heavy cream', 'cream cheese'];
       }
-      
+
       return baseList;
     };
 
@@ -538,7 +528,7 @@ const MealPlanner = () => {
     if (isPaleo) restrictionSummary.push('paleo');
     if (isLowCarb) restrictionSummary.push('low-carb');
 
-    const restrictionText = restrictionSummary.length > 0 ? 
+    const restrictionText = restrictionSummary.length > 0 ?
       ` following ${restrictionSummary.join(', ')} dietary guidelines` : '';
 
     return {
@@ -558,22 +548,22 @@ const MealPlanner = () => {
     }
 
     setLoading(true);
-    
+
     try {
       console.log('🚀 Starting meal plan generation...');
-      
+
       // Use local generation (no AI for now)
       console.log('📝 Using local meal plan generation...');
       const generatedPlan = generateRegionalMealPlan();
       console.log('✅ Local meal plan generated successfully');
-      
+
       // Save meal plan to database
       if (user) {
         try {
           console.log('💾 Saving meal plan to database...');
           const { saveMealPlan } = await import('../lib/supabase');
           const { error: saveError } = await saveMealPlan(user.id, generatedPlan, preferences);
-          
+
           if (saveError) {
             console.error('❌ Error saving meal plan:', saveError);
             // Don't fail the whole process if save fails
@@ -586,23 +576,23 @@ const MealPlanner = () => {
           console.log('⚠️ Continuing without saving to database');
         }
       }
-      
+
       // Update UI and usage count
       setMealPlan(generatedPlan);
-      
+
       // Increment usage count and handle the result
       console.log('📈 Updating usage count...');
       const usageResult = await incrementMealPlanUsage();
-      
+
       if (usageResult.success) {
         console.log('✅ Usage count updated successfully to:', usageResult.newCount);
       } else {
         console.error('❌ Failed to update usage count:', usageResult.error);
         // Continue anyway - don't fail the whole process
       }
-      
+
       console.log('🎉 Meal plan generation completed successfully');
-      
+
     } catch (error) {
       console.error('❌ Error generating meal plan:', error);
       alert('Failed to generate meal plan. Please try again.');
@@ -615,7 +605,7 @@ const MealPlanner = () => {
     if (!mealPlan?.weekPlan) return null;
 
     const days = Object.keys(mealPlan.weekPlan);
-    
+
     return (
       <div className="space-y-8">
         {/* Meal Plan Grid */}
@@ -707,11 +697,11 @@ const MealPlanner = () => {
               Generate personalized meal plans for {region} • {config?.currency || '$'} pricing
             </p>
           </div>
-          
+
           {!isPremium && (
             <div className="text-right">
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Plans used this week: <span className="font-semibold text-primary">{mealPlansUsed}</span>/{isPremium ? '∞' : '3'}
+                Plans used this week: <span className="font-semibold text-primary">{mealPlansUsed}</span>/{isPremium ? '∞' : '100'}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {isPremium ? 'Premium tier' : 'Free tier'}
@@ -729,7 +719,7 @@ const MealPlanner = () => {
       {/* Preferences Form */}
       <div className="card">
         <h2 className="text-xl font-semibold text-primary mb-6">Meal Preferences</h2>
-        
+
         <div className="space-y-6">
           {/* Basic Settings */}
           <div className="grid md:grid-cols-2 gap-6">
@@ -812,7 +802,7 @@ const MealPlanner = () => {
               <h4 className="font-medium mb-2">Debug Info:</h4>
               <p><strong>Dietary:</strong> {preferences.dietaryRestrictions.join(', ') || 'None'}</p>
               <p><strong>Cuisines:</strong> {preferences.cuisinePreferences.join(', ') || 'None'}</p>
-              <p><strong>Usage:</strong> {mealPlansUsed}/3</p>
+              <p><strong>Usage:</strong> {mealPlansUsed}/100</p>
               <p><strong>Can Generate:</strong> {canGenerateMealPlan() ? 'Yes' : 'No'}</p>
             </div>
           )}
@@ -826,7 +816,7 @@ const MealPlanner = () => {
             >
               {loading ? 'Generating...' : 'Generate Meal Plan'}
             </button>
-            
+
             {!canGenerateMealPlan() && !isPremium && (
               <p className="text-sm text-red-600 mt-2">
                 Weekly limit reached. Upgrade to Premium for unlimited plans!

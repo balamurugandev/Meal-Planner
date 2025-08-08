@@ -125,7 +125,7 @@ const Login = () => {
           <div className="text-center text-sm text-gray-500 dark:text-gray-400">
             <p>By signing up, you agree to our terms of service and privacy policy.</p>
             <p className="mt-2">
-              <strong>Free tier includes:</strong> 3 meal plans per week, basic features
+              <strong>Free tier includes:</strong> 100 meal plans per week, basic features
             </p>
           </div>
         )}

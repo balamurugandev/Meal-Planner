@@ -117,25 +117,37 @@ export const UserProvider = ({ children }) => {
 
   const canGenerateMealPlan = () => {
     if (isPremium) return true;
-    return mealPlansUsed < 3; // Free tier limit
+    return mealPlansUsed < 100; // Free tier limit (increased for testing)
   };
 
   const incrementMealPlanUsage = async () => {
-    if (!user) return;
+    if (!user) {
+      console.error('❌ No user found for usage increment');
+      return { success: false, error: 'No user' };
+    }
 
     try {
-      console.log('📈 Incrementing meal plan usage...');
-      const { error } = await updateWeeklyUsage(user.id);
+      console.log('📈 Incrementing meal plan usage for user:', user.email);
+      console.log('📊 Current usage count:', mealPlansUsed);
       
-      if (!error) {
-        const newCount = mealPlansUsed + 1;
+      const { data, error } = await updateWeeklyUsage(user.id);
+      
+      if (!error && data) {
+        const newCount = data.meal_plans_used_this_week;
         setMealPlansUsed(newCount);
-        console.log('✅ Meal plan usage updated:', newCount);
+        setUserProfile(prev => ({
+          ...prev,
+          meal_plans_used_this_week: newCount
+        }));
+        console.log('✅ Meal plan usage updated from', mealPlansUsed, 'to', newCount);
+        return { success: true, newCount };
       } else {
         console.error('❌ Error updating usage:', error);
+        return { success: false, error };
       }
     } catch (error) {
       console.error('❌ Exception updating usage:', error);
+      return { success: false, error };
     }
   };
 
